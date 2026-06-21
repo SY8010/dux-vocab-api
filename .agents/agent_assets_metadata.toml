@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "1ymJplFCK9yxZnkWuxb3T"
+uri = "file://artifacts/dux-vocab/assets/images/icon.png"
+type = "image"
+title = "dux vocab app icon"
