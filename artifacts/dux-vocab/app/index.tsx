@@ -21,6 +21,11 @@ export default function HomeScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
 
+  const handleGallery = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push("/gallery");
+  };
+
   const handleCamera = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push("/camera");
@@ -44,11 +49,15 @@ export default function HomeScreen() {
     >
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
+      {/* Logo / Title */}
       <View style={styles.topSection}>
         <View
           style={[
             styles.iconRing,
-            { backgroundColor: colors.primary + "18", borderColor: colors.primary + "40" },
+            {
+              backgroundColor: colors.primary + "18",
+              borderColor: colors.primary + "40",
+            },
           ]}
         >
           <View style={[styles.iconCircle, { backgroundColor: colors.primary }]}>
@@ -64,29 +73,36 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      <View style={styles.buttonSection}>
+      {/* Add a vocabulary set */}
+      <View style={styles.addSection}>
+        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+          단어장 추가
+        </Text>
+
+        {/* Primary — gallery */}
         <TouchableOpacity
           style={[
             styles.primaryButton,
             { backgroundColor: colors.primary, borderRadius: colors.radius + 4 },
           ]}
-          onPress={handleCamera}
+          onPress={handleGallery}
           activeOpacity={0.88}
         >
           <View style={styles.btnInner}>
             <View style={[styles.btnIconWrap, { backgroundColor: "#ffffff30" }]}>
-              <Ionicons name="camera" size={30} color="#fff" />
+              <Ionicons name="images" size={28} color="#fff" />
             </View>
             <View style={styles.btnTextWrap}>
-              <Text style={styles.primaryButtonText}>단어장 촬영 시작</Text>
+              <Text style={styles.primaryButtonText}>사진 올리기</Text>
               <Text style={styles.primaryButtonSub}>
-                사진을 찍어 단어를 추출합니다
+                갤러리에서 1–5장 선택
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={22} color="#ffffff90" />
           </View>
         </TouchableOpacity>
 
+        {/* Secondary — camera */}
         <TouchableOpacity
           style={[
             styles.secondaryButton,
@@ -96,19 +112,19 @@ export default function HomeScreen() {
               borderRadius: colors.radius + 4,
             },
           ]}
-          onPress={handleSaved}
+          onPress={handleCamera}
           activeOpacity={0.88}
         >
           <View style={styles.btnInner}>
             <View style={[styles.btnIconWrap, { backgroundColor: colors.secondary }]}>
-              <Ionicons name="folder-open" size={28} color={colors.primary} />
+              <Ionicons name="camera" size={26} color={colors.primary} />
             </View>
             <View style={styles.btnTextWrap}>
               <Text style={[styles.secondaryButtonText, { color: colors.foreground }]}>
-                저장된 단어장
+                직접 찍기
               </Text>
               <Text style={[styles.secondaryButtonSub, { color: colors.mutedForeground }]}>
-                이전에 저장된 단어장 보기
+                카메라로 단어장 촬영
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={22} color={colors.mutedForeground} />
@@ -116,11 +132,24 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
-          최대 5장의 사진을 촬영할 수 있습니다
+      {/* Saved sets */}
+      <TouchableOpacity
+        style={[
+          styles.savedButton,
+          {
+            backgroundColor: colors.muted,
+            borderRadius: colors.radius + 4,
+          },
+        ]}
+        onPress={handleSaved}
+        activeOpacity={0.88}
+      >
+        <Ionicons name="folder-open" size={22} color={colors.primary} />
+        <Text style={[styles.savedButtonText, { color: colors.foreground }]}>
+          저장된 단어장
         </Text>
-      </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} style={{ marginLeft: "auto" }} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -128,26 +157,26 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 24,
     justifyContent: "space-between",
-    paddingHorizontal: 28,
   },
   topSection: {
     alignItems: "center",
-    paddingTop: 20,
-    gap: 16,
+    paddingTop: 12,
+    gap: 14,
   },
   iconRing: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
   iconCircle: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -157,24 +186,32 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontFamily: "Inter_700Bold",
     textAlign: "center",
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "Inter_400Regular",
     textAlign: "center",
   },
-  buttonSection: {
-    gap: 16,
+  addSection: {
+    gap: 12,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    paddingLeft: 4,
+    marginBottom: 2,
   },
   primaryButton: {
     shadowColor: "#3B6FE8",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
     elevation: 6,
   },
   secondaryButton: {
@@ -183,14 +220,14 @@ const styles = StyleSheet.create({
   btnInner: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
     gap: 14,
   },
   btnIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
+    width: 50,
+    height: 50,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -199,7 +236,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   primaryButtonText: {
-    fontSize: 20,
+    fontSize: 19,
     fontFamily: "Inter_700Bold",
     color: "#fff",
   },
@@ -209,18 +246,22 @@ const styles = StyleSheet.create({
     color: "#ffffff99",
   },
   secondaryButtonText: {
-    fontSize: 20,
+    fontSize: 19,
     fontFamily: "Inter_700Bold",
   },
   secondaryButtonSub: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
   },
-  footer: {
+  savedButton: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
   },
-  footerText: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
+  savedButtonText: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
   },
 });

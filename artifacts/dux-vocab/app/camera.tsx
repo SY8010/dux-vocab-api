@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  Alert,
   ActivityIndicator,
   Platform,
 } from "react-native";
@@ -16,10 +15,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
-import { useVocab } from "@/context/VocabContext";
+import { useAnalyze } from "@/hooks/useAnalyze";
 
 const MAX_PHOTOS = 5;
-const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
 
 interface CapturedPhoto {
   uri: string;
@@ -30,12 +28,10 @@ export default function CameraScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colors = useColors();
-  const { setCurrentWords } = useVocab();
+  const { analyze, loading, error } = useAnalyze();
 
   const [permission, requestPermission] = useCameraPermissions();
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -54,8 +50,7 @@ export default function CameraScreen() {
         setPhotos((prev) => [...prev, { uri: pic.uri, base64: pic.base64! }]);
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(`사진 촬영 오류: ${msg}`);
+      // error shown via useAnalyze
     }
   }, [photos.length]);
 
@@ -63,65 +58,6 @@ export default function CameraScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   }, []);
-
-  const submit = useCallback(async () => {
-    if (photos.length === 0 || loading) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const base64Images = photos.map((p) => p.base64);
-
-      const response = await fetch(`${API_BASE}/api/ocr/extract`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images: base64Images }),
-      });
-
-      let responseText = "";
-      try {
-        responseText = await response.text();
-      } catch {
-        responseText = "(응답 없음)";
-      }
-
-      if (!response.ok) {
-        const errMsg = `서버 오류 ${response.status}:\n${responseText}`;
-        setError(errMsg);
-        Alert.alert("분석 실패", errMsg);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        return;
-      }
-
-      let data: { words?: unknown[] };
-      try {
-        data = JSON.parse(responseText);
-      } catch {
-        const errMsg = `JSON 파싱 오류:\n${responseText}`;
-        setError(errMsg);
-        Alert.alert("분석 실패", errMsg);
-        return;
-      }
-
-      if (!data.words || !Array.isArray(data.words)) {
-        const errMsg = `잘못된 응답 형식:\n${responseText}`;
-        setError(errMsg);
-        Alert.alert("분석 실패", errMsg);
-        return;
-      }
-
-      setCurrentWords(data.words as Parameters<typeof setCurrentWords>[0]);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace("/words");
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const errMsg = `네트워크 오류:\n${msg}`;
-      setError(errMsg);
-      Alert.alert("분석 실패", errMsg);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setLoading(false);
-    }
-  }, [photos, loading, setCurrentWords, router]);
 
   if (!permission) {
     return (
@@ -212,14 +148,14 @@ export default function CameraScreen() {
         )}
 
         {/* Error display */}
-        {error && (
-          <View style={[styles.errorBox]}>
+        {error ? (
+          <View style={styles.errorBox}>
             <Ionicons name="alert-circle" size={16} color="#ff6666" />
             <Text style={styles.errorText} numberOfLines={4}>
               {error}
             </Text>
           </View>
-        )}
+        ) : null}
 
         {/* Controls */}
         <View style={styles.controls}>
@@ -244,15 +180,13 @@ export default function CameraScreen() {
 
           {/* Submit */}
           <TouchableOpacity
-            onPress={submit}
+            onPress={() => analyze(photos.map((p) => p.base64))}
             disabled={photos.length === 0 || loading}
             style={[
               styles.submitBtn,
               {
                 backgroundColor:
-                  photos.length === 0 || loading
-                    ? "#ffffff33"
-                    : "#3B6FE8",
+                  photos.length === 0 || loading ? "#ffffff33" : "#3B6FE8",
                 borderRadius: 14,
               },
             ]}

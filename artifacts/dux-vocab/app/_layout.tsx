@@ -24,6 +24,7 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="gallery" options={{ headerShown: false, animation: "slide_from_bottom" }} />
       <Stack.Screen name="camera" options={{ headerShown: false, animation: "slide_from_bottom" }} />
       <Stack.Screen name="words" options={{ headerShown: false, animation: "slide_from_right" }} />
       <Stack.Screen name="saved" options={{ headerShown: false, animation: "slide_from_right" }} />

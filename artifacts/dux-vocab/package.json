@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "expo-camera": "^17.0.10",
-    "expo-file-system": "^19.0.23"
+    "expo-file-system": "^19.0.23",
+    "expo-image-manipulator": "^56.0.19"
   }
 }
