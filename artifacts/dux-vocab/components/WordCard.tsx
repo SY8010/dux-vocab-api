@@ -236,6 +236,26 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               style={{ marginLeft: 4 }}
             />
           )}
+          {/* Pencil always visible — stops propagation so it doesn't also toggle expand */}
+          {!editing && (
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                if (!expanded) {
+                  LayoutAnimation.configureNext(
+                    LayoutAnimation.Presets.easeInEaseOut
+                  );
+                  setExpanded(true);
+                }
+                startEdit();
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.headerEditBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="pencil" size={16} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
           <Ionicons
             name={expanded ? "chevron-up" : "chevron-down"}
             size={20}
@@ -552,6 +572,14 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: "center",
     justifyContent: "center",
+  },
+  // ── Header edit button ──
+  headerEditBtn: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 4,
   },
   // ── Edit inputs ──
   editInput: {

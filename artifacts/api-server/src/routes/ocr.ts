@@ -7,7 +7,13 @@ const anthropic = new Anthropic({
   apiKey: process.env["ANTHROPIC_API_KEY"],
 });
 
-const SYSTEM_PROMPT = `You are an OCR + parsing engine for an English vocabulary study app. Each entry has a headword, a part-of-speech abbreviation (N./adj./v./adv.), an English dictionary definition (1–3 lines), and one or more example sentences. Extract EVERY entry across all images (the count varies). For each word also add Korean: word_ko (short meaning), definition_ko (natural translation), examples_ko. Return ONLY valid JSON, no markdown, schema: {"words":[{"id","word","pos","definition_en","examples_en":[],"word_ko","definition_ko","examples_ko":[],"confidence"}]}. If unclear, best-guess and set confidence:"low". confidence values must be exactly "high", "medium", or "low".`;
+const SYSTEM_PROMPT = `You are an OCR + parsing engine for an English vocabulary study app. Each entry has a headword, a part-of-speech abbreviation (N./adj./v./adv.), an English dictionary definition (1–3 lines), and one or more example sentences. Extract EVERY entry across all images (the count varies). For each word also add Korean: word_ko (short meaning), definition_ko (natural translation), examples_ko. Return ONLY valid JSON, no markdown, schema: {"words":[{"id","word","pos","definition_en","examples_en":[],"word_ko","definition_ko","examples_ko":[],"confidence"}]}. If unclear, best-guess and set confidence:"low". confidence values must be exactly "high", "medium", or "low". The source is an English vocabulary book. Output English in the English fields. In Korean fields use ONLY Korean (Hangul) plus standard punctuation — do NOT include any Chinese characters (Hanja/Kanji). Ignore faint show-through text bleeding from the back of the page.`;
+
+// Strip CJK ideographs that may bleed through from the back of the page
+const CJK_RE = /[\u3400-\u9FFF\uF900-\uFAFF]/g;
+function stripCjk(s: string): string {
+  return s.replace(CJK_RE, "").trim();
+}
 
 router.post("/ocr/extract", async (req, res) => {
   const { images } = req.body as { images: string[] };
@@ -73,16 +79,16 @@ router.post("/ocr/extract", async (req, res) => {
 
     const words = (parsed.words as Record<string, unknown>[]).map((w, i) => ({
       id: `${Date.now()}_${i}_${Math.random().toString(36).substr(2, 6)}`,
-      word: String(w.word ?? ""),
+      word: stripCjk(String(w.word ?? "")),
       pos: String(w.pos ?? ""),
-      definition_en: String(w.definition_en ?? ""),
+      definition_en: stripCjk(String(w.definition_en ?? "")),
       examples_en: Array.isArray(w.examples_en)
-        ? (w.examples_en as string[]).map(String)
+        ? (w.examples_en as string[]).map((s) => stripCjk(String(s)))
         : [],
-      word_ko: String(w.word_ko ?? ""),
-      definition_ko: String(w.definition_ko ?? ""),
+      word_ko: stripCjk(String(w.word_ko ?? "")),
+      definition_ko: stripCjk(String(w.definition_ko ?? "")),
       examples_ko: Array.isArray(w.examples_ko)
-        ? (w.examples_ko as string[]).map(String)
+        ? (w.examples_ko as string[]).map((s) => stripCjk(String(s)))
         : [],
       confidence: ["high", "medium", "low"].includes(String(w.confidence))
         ? (w.confidence as string)
