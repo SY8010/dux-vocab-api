@@ -11,7 +11,6 @@ import {
   Platform,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,6 +21,11 @@ import { useVocab } from "@/context/VocabContext";
 const MAX_PHOTOS = 5;
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
 
+interface CapturedPhoto {
+  uri: string;
+  base64: string;
+}
+
 export default function CameraScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -29,7 +33,7 @@ export default function CameraScreen() {
   const { setCurrentWords } = useVocab();
 
   const [permission, requestPermission] = useCameraPermissions();
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
@@ -40,13 +44,18 @@ export default function CameraScreen() {
   const takePhoto = useCallback(async () => {
     if (photos.length >= MAX_PHOTOS) return;
     try {
-      const pic = await cameraRef.current?.takePictureAsync({ quality: 0.65, skipProcessing: false });
-      if (pic?.uri) {
+      const pic = await cameraRef.current?.takePictureAsync({
+        quality: 0.5,
+        base64: true,
+        skipProcessing: false,
+      });
+      if (pic?.uri && pic?.base64) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setPhotos((prev) => [...prev, pic.uri]);
+        setPhotos((prev) => [...prev, { uri: pic.uri, base64: pic.base64! }]);
       }
     } catch (e) {
-      setError("사진 촬영에 실패했습니다.");
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(`사진 촬영 오류: ${msg}`);
     }
   }, [photos.length]);
 
@@ -60,13 +69,7 @@ export default function CameraScreen() {
     setLoading(true);
     setError(null);
     try {
-      const base64Images = await Promise.all(
-        photos.map((uri) =>
-          FileSystem.readAsStringAsync(uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          })
-        )
-      );
+      const base64Images = photos.map((p) => p.base64);
 
       const response = await fetch(`${API_BASE}/api/ocr/extract`, {
         method: "POST",
@@ -74,23 +77,46 @@ export default function CameraScreen() {
         body: JSON.stringify({ images: base64Images }),
       });
 
-      if (!response.ok) {
-        const errBody = await response.text();
-        throw new Error(errBody || `Server error ${response.status}`);
+      let responseText = "";
+      try {
+        responseText = await response.text();
+      } catch {
+        responseText = "(응답 없음)";
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errMsg = `서버 오류 ${response.status}:\n${responseText}`;
+        setError(errMsg);
+        Alert.alert("분석 실패", errMsg);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+
+      let data: { words?: unknown[] };
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        const errMsg = `JSON 파싱 오류:\n${responseText}`;
+        setError(errMsg);
+        Alert.alert("분석 실패", errMsg);
+        return;
+      }
 
       if (!data.words || !Array.isArray(data.words)) {
-        throw new Error("서버 응답 형식이 올바르지 않습니다.");
+        const errMsg = `잘못된 응답 형식:\n${responseText}`;
+        setError(errMsg);
+        Alert.alert("분석 실패", errMsg);
+        return;
       }
 
-      setCurrentWords(data.words);
+      setCurrentWords(data.words as Parameters<typeof setCurrentWords>[0]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/words");
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
-      setError(`오류: ${msg}`);
+      const msg = e instanceof Error ? e.message : String(e);
+      const errMsg = `네트워크 오류:\n${msg}`;
+      setError(errMsg);
+      Alert.alert("분석 실패", errMsg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -107,20 +133,32 @@ export default function CameraScreen() {
 
   if (!permission.granted) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background, paddingTop: topPad }]}>
+      <View
+        style={[
+          styles.centered,
+          { backgroundColor: colors.background, paddingTop: topPad },
+        ]}
+      >
         <Ionicons name="camera-outline" size={64} color={colors.mutedForeground} />
-        <Text style={[styles.permTitle, { color: colors.foreground }]}>카메라 권한 필요</Text>
+        <Text style={[styles.permTitle, { color: colors.foreground }]}>
+          카메라 권한 필요
+        </Text>
         <Text style={[styles.permSub, { color: colors.mutedForeground }]}>
           단어장을 촬영하려면 카메라 권한이 필요합니다
         </Text>
         <TouchableOpacity
-          style={[styles.permBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
+          style={[
+            styles.permBtn,
+            { backgroundColor: colors.primary, borderRadius: colors.radius },
+          ]}
           onPress={requestPermission}
         >
           <Text style={styles.permBtnText}>권한 허용</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 12 }}>
-          <Text style={[styles.backLink, { color: colors.mutedForeground }]}>돌아가기</Text>
+          <Text style={[styles.backLink, { color: colors.mutedForeground }]}>
+            돌아가기
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -128,12 +166,7 @@ export default function CameraScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: "#000" }]}>
-      {/* Camera */}
-      <CameraView
-        ref={cameraRef}
-        style={StyleSheet.absoluteFill}
-        facing="back"
-      />
+      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
 
       {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
@@ -153,7 +186,7 @@ export default function CameraScreen() {
 
       {/* Bottom panel */}
       <View style={[styles.bottomPanel, { paddingBottom: botPad + 16 }]}>
-        {/* Photo strip */}
+        {/* Thumbnail strip */}
         {photos.length > 0 && (
           <ScrollView
             horizontal
@@ -161,9 +194,9 @@ export default function CameraScreen() {
             style={styles.strip}
             contentContainerStyle={styles.stripContent}
           >
-            {photos.map((uri, i) => (
-              <View key={uri + i} style={styles.thumbContainer}>
-                <Image source={{ uri }} style={styles.thumb} />
+            {photos.map((photo, i) => (
+              <View key={photo.uri + i} style={styles.thumbContainer}>
+                <Image source={{ uri: photo.uri }} style={styles.thumb} />
                 <TouchableOpacity
                   style={styles.deleteBtn}
                   onPress={() => deletePhoto(i)}
@@ -178,10 +211,13 @@ export default function CameraScreen() {
           </ScrollView>
         )}
 
-        {/* Error */}
+        {/* Error display */}
         {error && (
-          <View style={[styles.errorBox, { backgroundColor: "#ff444444" }]}>
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={[styles.errorBox]}>
+            <Ionicons name="alert-circle" size={16} color="#ff6666" />
+            <Text style={styles.errorText} numberOfLines={4}>
+              {error}
+            </Text>
           </View>
         )}
 
@@ -214,14 +250,19 @@ export default function CameraScreen() {
               styles.submitBtn,
               {
                 backgroundColor:
-                  photos.length === 0 || loading ? "#ffffff33" : colors.primary,
+                  photos.length === 0 || loading
+                    ? "#ffffff33"
+                    : "#3B6FE8",
                 borderRadius: 14,
               },
             ]}
             activeOpacity={0.85}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={styles.submitText}>분석 중...</Text>
+              </>
             ) : (
               <>
                 <Ionicons name="sparkles" size={18} color="#fff" />
@@ -280,9 +321,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     gap: 12,
   },
-  strip: {
-    maxHeight: 90,
-  },
+  strip: { maxHeight: 90 },
   stripContent: {
     paddingHorizontal: 16,
     gap: 10,
@@ -325,12 +364,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 10,
     borderRadius: 10,
+    backgroundColor: "#ff000033",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
   },
   errorText: {
-    color: "#ff6666",
+    color: "#ff8888",
     fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    textAlign: "center",
+    fontSize: 12,
+    flex: 1,
+    lineHeight: 17,
   },
   controls: {
     flexDirection: "row",
