@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 
@@ -61,7 +61,7 @@ export default function HomeScreen() {
           ]}
         >
           <View style={[styles.iconCircle, { backgroundColor: colors.primary }]}>
-            <Ionicons name="book" size={52} color="#fff" />
+            <MaterialIcons name="menu-book" size={52} color="#fff" />
           </View>
         </View>
 
@@ -90,7 +90,7 @@ export default function HomeScreen() {
         >
           <View style={styles.btnInner}>
             <View style={[styles.btnIconWrap, { backgroundColor: "#ffffff30" }]}>
-              <Ionicons name="images" size={28} color="#fff" />
+              <MaterialIcons name="photo-library" size={28} color="#fff" />
             </View>
             <View style={styles.btnTextWrap}>
               <Text style={styles.primaryButtonText}>사진 올리기</Text>
@@ -98,7 +98,7 @@ export default function HomeScreen() {
                 갤러리에서 1–5장 선택
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={22} color="#ffffff90" />
+            <MaterialIcons name="chevron-right" size={22} color="#ffffff90" />
           </View>
         </TouchableOpacity>
 
@@ -117,7 +117,7 @@ export default function HomeScreen() {
         >
           <View style={styles.btnInner}>
             <View style={[styles.btnIconWrap, { backgroundColor: colors.secondary }]}>
-              <Ionicons name="camera" size={26} color={colors.primary} />
+              <MaterialIcons name="photo-camera" size={26} color={colors.primary} />
             </View>
             <View style={styles.btnTextWrap}>
               <Text style={[styles.secondaryButtonText, { color: colors.foreground }]}>
@@ -127,7 +127,7 @@ export default function HomeScreen() {
                 카메라로 단어장 촬영
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={22} color={colors.mutedForeground} />
+            <MaterialIcons name="chevron-right" size={22} color={colors.mutedForeground} />
           </View>
         </TouchableOpacity>
       </View>
@@ -144,11 +144,11 @@ export default function HomeScreen() {
         onPress={handleSaved}
         activeOpacity={0.88}
       >
-        <Ionicons name="folder-open" size={22} color={colors.primary} />
+        <MaterialIcons name="folder-open" size={22} color={colors.primary} />
         <Text style={[styles.savedButtonText, { color: colors.foreground }]}>
           저장된 단어장
         </Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} style={{ marginLeft: "auto" }} />
+        <MaterialIcons name="chevron-right" size={18} color={colors.mutedForeground} style={{ marginLeft: "auto" }} />
       </TouchableOpacity>
     </View>
   );

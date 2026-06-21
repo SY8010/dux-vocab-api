@@ -9,7 +9,7 @@ import {
   Platform,
   UIManager,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Speech from "expo-speech";
 import { useColors } from "@/hooks/useColors";
@@ -30,7 +30,7 @@ function speakOne(text: string, onDone?: () => void) {
     language: "en-US",
     rate: 0.9,
     onDone,
-    onError: onDone, // keep sequence moving on error
+    onError: onDone,
   });
 }
 
@@ -58,7 +58,7 @@ function SpeakBtn({ text, size = 22, color, bg }: SpeakBtnProps) {
       ]}
       activeOpacity={0.7}
     >
-      <Ionicons name="volume-high" size={size} color={color} />
+      <MaterialIcons name="volume-up" size={size} color={color} />
     </TouchableOpacity>
   );
 }
@@ -82,14 +82,12 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
 
   const isLowConfidence = word.confidence === "low";
 
-  // ── expand / collapse ──────────────────────────────────────────────────────
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((e) => !e);
     if (!expanded) Haptics.selectionAsync();
   };
 
-  // ── edit helpers ──────────────────────────────────────────────────────────
   const startEdit = () => {
     setEditing(true);
     setEditWord(word.word);
@@ -111,7 +109,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
 
   const cancelEdit = () => setEditing(false);
 
-  // ── 전체 듣기 (listen all) ─────────────────────────────────────────────────
   const stopAll = () => {
     cancelRef.current = true;
     Speech.stop();
@@ -147,7 +144,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
     if (!cancelRef.current) setIsPlayingAll(false);
   };
 
-  // ── colors ────────────────────────────────────────────────────────────────
   const cardBg = isLowConfidence ? colors.warning + "22" : colors.card;
   const borderColor = isLowConfidence ? colors.warning : colors.border;
 
@@ -159,7 +155,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
   };
   const posColor = posColors[word.pos] ?? colors.primary;
 
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <View
       style={[
@@ -199,7 +194,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
             </Text>
           )}
 
-          {/* 🔊 word-level speak button */}
           {!editing && (
             <SpeakBtn
               text={word.word}
@@ -229,14 +223,13 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
             </Text>
           )}
           {isLowConfidence && !editing && (
-            <Ionicons
-              name="alert-circle"
+            <MaterialIcons
+              name="error"
               size={18}
               color={colors.warning}
               style={{ marginLeft: 4 }}
             />
           )}
-          {/* Pencil always visible — stops propagation so it doesn't also toggle expand */}
           {!editing && (
             <TouchableOpacity
               onPress={(e) => {
@@ -253,14 +246,14 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               style={styles.headerEditBtn}
               activeOpacity={0.7}
             >
-              <Ionicons name="pencil" size={16} color={colors.mutedForeground} />
+              <MaterialIcons name="edit" size={16} color={colors.mutedForeground} />
             </TouchableOpacity>
           )}
-          <Ionicons
-            name={expanded ? "chevron-up" : "chevron-down"}
-            size={20}
+          <MaterialIcons
+            name={expanded ? "expand-less" : "expand-more"}
+            size={22}
             color={colors.mutedForeground}
-            style={{ marginLeft: 6 }}
+            style={{ marginLeft: 4 }}
           />
         </View>
       </TouchableOpacity>
@@ -269,7 +262,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
       {expanded && (
         <View style={[styles.body, { borderTopColor: borderColor }]}>
 
-          {/* English definition */}
           <Text style={[styles.sectionLabel, { color: colors.primary }]}>
             English Definition
           </Text>
@@ -287,7 +279,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
             />
           </View>
 
-          {/* English examples */}
           {word.examples_en.length > 0 && (
             <View style={styles.examplesBlock}>
               {word.examples_en.map((ex, i) => (
@@ -312,7 +303,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
 
           <View style={[styles.divider, { backgroundColor: borderColor }]} />
 
-          {/* Korean section */}
           <Text style={[styles.sectionLabel, { color: colors.accent }]}>
             한국어
           </Text>
@@ -350,7 +340,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
 
           {/* ── Action row ── */}
           <View style={styles.actionRow}>
-            {/* 전체 듣기 */}
             <TouchableOpacity
               onPress={playAll}
               style={[
@@ -365,9 +354,9 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               ]}
               activeOpacity={0.8}
             >
-              <Ionicons
-                name={isPlayingAll ? "stop-circle" : "play-circle"}
-                size={22}
+              <MaterialIcons
+                name={isPlayingAll ? "stop" : "play-arrow"}
+                size={24}
                 color={isPlayingAll ? colors.accent : colors.primary}
               />
               <Text
@@ -380,7 +369,6 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               </Text>
             </TouchableOpacity>
 
-            {/* Edit / Save / Cancel */}
             {editing ? (
               <>
                 <TouchableOpacity
@@ -390,10 +378,8 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
                     { backgroundColor: colors.success + "20" },
                   ]}
                 >
-                  <Ionicons name="checkmark" size={18} color={colors.success} />
-                  <Text
-                    style={[styles.actionBtnText, { color: colors.success }]}
-                  >
+                  <MaterialIcons name="check" size={20} color={colors.success} />
+                  <Text style={[styles.actionBtnText, { color: colors.success }]}>
                     저장
                   </Text>
                 </TouchableOpacity>
@@ -404,11 +390,7 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
                     { backgroundColor: colors.muted },
                   ]}
                 >
-                  <Ionicons
-                    name="close"
-                    size={18}
-                    color={colors.mutedForeground}
-                  />
+                  <MaterialIcons name="close" size={20} color={colors.mutedForeground} />
                   <Text
                     style={[
                       styles.actionBtnText,
@@ -427,10 +409,8 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
                   { backgroundColor: colors.secondary },
                 ]}
               >
-                <Ionicons name="pencil" size={16} color={colors.primary} />
-                <Text
-                  style={[styles.actionBtnText, { color: colors.primary }]}
-                >
+                <MaterialIcons name="edit" size={18} color={colors.primary} />
+                <Text style={[styles.actionBtnText, { color: colors.primary }]}>
                   수정
                 </Text>
               </TouchableOpacity>
@@ -489,7 +469,6 @@ const styles = StyleSheet.create({
     textAlign: "right",
     flexShrink: 1,
   },
-  // ── Expanded body ──
   body: {
     paddingHorizontal: 14,
     paddingBottom: 14,
@@ -534,7 +513,6 @@ const styles = StyleSheet.create({
     height: 1,
     marginVertical: 6,
   },
-  // ── Action row ──
   actionRow: {
     flexDirection: "row",
     gap: 8,
@@ -566,14 +544,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
   },
-  // ── Speak button ──
   speakBtn: {
     width: 36,
     height: 36,
     alignItems: "center",
     justifyContent: "center",
   },
-  // ── Header edit button ──
   headerEditBtn: {
     width: 32,
     height: 32,
@@ -581,7 +557,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginLeft: 4,
   },
-  // ── Edit inputs ──
   editInput: {
     borderWidth: 1,
     borderRadius: 8,

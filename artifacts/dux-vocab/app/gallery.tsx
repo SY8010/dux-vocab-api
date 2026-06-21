@@ -13,7 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { useAnalyze } from "@/hooks/useAnalyze";
@@ -81,7 +81,6 @@ export default function GalleryScreen() {
     }
   }, [photos.length, router]);
 
-  // Open picker immediately on first mount
   useEffect(() => {
     openPicker();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,7 +114,7 @@ export default function GalleryScreen() {
           onPress={() => router.back()}
           style={[styles.headerBtn, { backgroundColor: colors.secondary }]}
         >
-          <Ionicons name="arrow-back" size={22} color={colors.primary} />
+          <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
 
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
@@ -146,7 +145,7 @@ export default function GalleryScreen() {
               onPress={() => deletePhoto(i)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="close-circle" size={28} color="#ff4444" />
+              <MaterialIcons name="cancel" size={28} color="#ff4444" />
             </TouchableOpacity>
             <View style={[styles.indexBadge, { backgroundColor: colors.primary }]}>
               <Text style={styles.indexText}>{i + 1}</Text>
@@ -173,7 +172,7 @@ export default function GalleryScreen() {
               <ActivityIndicator color={colors.primary} />
             ) : (
               <>
-                <Ionicons name="add" size={36} color={colors.primary} />
+                <MaterialIcons name="add" size={36} color={colors.primary} />
                 <Text style={[styles.addText, { color: colors.primary }]}>추가</Text>
               </>
             )}
@@ -192,10 +191,9 @@ export default function GalleryScreen() {
           },
         ]}
       >
-        {/* Error */}
         {error ? (
           <View style={[styles.errorBox, { backgroundColor: "#ff000022", borderColor: "#ff444444" }]}>
-            <Ionicons name="alert-circle" size={15} color="#ff6666" />
+            <MaterialIcons name="error" size={15} color="#ff6666" />
             <Text style={styles.errorText} numberOfLines={3}>
               {error}
             </Text>
@@ -204,9 +202,9 @@ export default function GalleryScreen() {
 
         <View style={styles.actionRow}>
           <View style={styles.hint}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.mutedForeground} />
+            <MaterialIcons name="info" size={16} color={colors.mutedForeground} />
             <Text style={[styles.hintText, { color: colors.mutedForeground }]}>
-              불필요한 사진은 ✕로 삭제하세요
+              불필요한 사진은 X로 삭제하세요
             </Text>
           </View>
 
@@ -232,7 +230,7 @@ export default function GalleryScreen() {
               </>
             ) : (
               <>
-                <Ionicons name="sparkles" size={20} color="#fff" />
+                <MaterialIcons name="auto-awesome" size={20} color="#fff" />
                 <Text style={styles.analyzeBtnText}>분석 시작</Text>
               </>
             )}

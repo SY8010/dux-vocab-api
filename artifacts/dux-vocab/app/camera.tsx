@@ -12,7 +12,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { useAnalyze } from "@/hooks/useAnalyze";
@@ -75,7 +75,7 @@ export default function CameraScreen() {
           { backgroundColor: colors.background, paddingTop: topPad },
         ]}
       >
-        <Ionicons name="camera-outline" size={64} color={colors.mutedForeground} />
+        <MaterialIcons name="photo-camera" size={64} color={colors.mutedForeground} />
         <Text style={[styles.permTitle, { color: colors.foreground }]}>
           카메라 권한 필요
         </Text>
@@ -110,7 +110,7 @@ export default function CameraScreen() {
           style={[styles.topBtn, { backgroundColor: "#00000066" }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="close" size={26} color="#fff" />
+          <MaterialIcons name="close" size={26} color="#fff" />
         </TouchableOpacity>
 
         <View style={[styles.counter, { backgroundColor: "#00000066" }]}>
@@ -137,7 +137,7 @@ export default function CameraScreen() {
                   style={styles.deleteBtn}
                   onPress={() => deletePhoto(i)}
                 >
-                  <Ionicons name="close-circle" size={22} color="#ff4444" />
+                  <MaterialIcons name="cancel" size={22} color="#ff4444" />
                 </TouchableOpacity>
                 <View style={styles.thumbNumber}>
                   <Text style={styles.thumbNumberText}>{i + 1}</Text>
@@ -150,7 +150,7 @@ export default function CameraScreen() {
         {/* Error display */}
         {error ? (
           <View style={styles.errorBox}>
-            <Ionicons name="alert-circle" size={16} color="#ff6666" />
+            <MaterialIcons name="error" size={16} color="#ff6666" />
             <Text style={styles.errorText} numberOfLines={4}>
               {error}
             </Text>
@@ -199,7 +199,7 @@ export default function CameraScreen() {
               </>
             ) : (
               <>
-                <Ionicons name="sparkles" size={18} color="#fff" />
+                <MaterialIcons name="auto-awesome" size={18} color="#fff" />
                 <Text style={styles.submitText}>분석 시작</Text>
               </>
             )}

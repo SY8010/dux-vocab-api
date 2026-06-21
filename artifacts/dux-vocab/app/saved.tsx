@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { useVocab, WordSet } from "@/context/VocabContext";
@@ -74,7 +74,7 @@ export default function SavedScreen() {
           onPress={() => router.back()}
           style={[styles.headerBtn, { backgroundColor: colors.secondary }]}
         >
-          <Ionicons name="arrow-back" size={22} color={colors.primary} />
+          <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
           저장된 단어장
@@ -84,7 +84,7 @@ export default function SavedScreen() {
 
       {savedSets.length === 0 ? (
         <View style={styles.empty}>
-          <Ionicons name="folder-open-outline" size={72} color={colors.mutedForeground} />
+          <MaterialIcons name="folder-open" size={72} color={colors.mutedForeground} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
             저장된 단어장이 없습니다
           </Text>
@@ -98,7 +98,7 @@ export default function SavedScreen() {
               { backgroundColor: colors.primary, borderRadius: colors.radius },
             ]}
           >
-            <Ionicons name="camera" size={20} color="#fff" />
+            <MaterialIcons name="photo-camera" size={20} color="#fff" />
             <Text style={styles.emptyBtnText}>촬영 시작</Text>
           </TouchableOpacity>
         </View>
@@ -125,7 +125,7 @@ export default function SavedScreen() {
               ]}
             >
               <View style={[styles.setIconWrap, { backgroundColor: colors.secondary }]}>
-                <Ionicons name="folder" size={26} color={colors.primary} />
+                <MaterialIcons name="folder" size={26} color={colors.primary} />
               </View>
 
               <View style={styles.setInfo}>
@@ -136,8 +136,8 @@ export default function SavedScreen() {
                   {item.name}
                 </Text>
                 <View style={styles.setMeta}>
-                  <Ionicons
-                    name="document-text-outline"
+                  <MaterialIcons
+                    name="description"
                     size={13}
                     color={colors.mutedForeground}
                   />
@@ -158,7 +158,7 @@ export default function SavedScreen() {
                 style={[styles.deleteBtn, { backgroundColor: colors.destructive + "15" }]}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="trash-outline" size={20} color={colors.destructive} />
+                <MaterialIcons name="delete" size={20} color={colors.destructive} />
               </TouchableOpacity>
             </TouchableOpacity>
           )}

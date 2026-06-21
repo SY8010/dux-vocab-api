@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { useVocab, WordEntry } from "@/context/VocabContext";
@@ -87,7 +87,7 @@ export default function WordsScreen() {
             },
           ]}
         >
-          <Ionicons name="alert-circle" size={18} color={colors.warning} />
+          <MaterialIcons name="error" size={18} color={colors.warning} />
           <Text style={[styles.warningText, { color: colors.warningForeground }]}>
             {lowCount}개의 단어는 확인이 필요합니다. 노란색 카드를 탭하여 수정하세요.
           </Text>
@@ -115,7 +115,7 @@ export default function WordsScreen() {
           onPress={() => router.back()}
           style={[styles.headerBtn, { backgroundColor: colors.secondary }]}
         >
-          <Ionicons name="arrow-back" size={22} color={colors.primary} />
+          <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
 
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
@@ -137,10 +137,10 @@ export default function WordsScreen() {
           {saving ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : saved ? (
-            <Ionicons name="checkmark" size={20} color={colors.success} />
+            <MaterialIcons name="check" size={20} color={colors.success} />
           ) : (
             <>
-              <Ionicons name="bookmark" size={18} color="#fff" />
+              <MaterialIcons name="bookmark" size={18} color="#fff" />
               <Text style={styles.saveBtnText}>저장</Text>
             </>
           )}
@@ -149,7 +149,7 @@ export default function WordsScreen() {
 
       {currentWords.length === 0 ? (
         <View style={styles.empty}>
-          <Ionicons name="document-text-outline" size={64} color={colors.mutedForeground} />
+          <MaterialIcons name="description" size={64} color={colors.mutedForeground} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
             단어가 없습니다
           </Text>
@@ -160,7 +160,7 @@ export default function WordsScreen() {
             onPress={() => router.replace("/camera")}
             style={[styles.emptyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
           >
-            <Ionicons name="camera" size={20} color="#fff" />
+            <MaterialIcons name="photo-camera" size={20} color="#fff" />
             <Text style={styles.emptyBtnText}>촬영하러 가기</Text>
           </TouchableOpacity>
         </View>
