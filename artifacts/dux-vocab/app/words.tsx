@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
-import { useVocab, WordEntry } from "@/context/VocabContext";
+import { useVocab } from "@/context/VocabContext";
 import { WordCard } from "@/components/WordCard";
 
 export default function WordsScreen() {
@@ -122,29 +122,50 @@ export default function WordsScreen() {
           단어 목록
         </Text>
 
-        <TouchableOpacity
-          onPress={handleSave}
-          disabled={saving || saved || currentWords.length === 0}
-          style={[
-            styles.headerBtn,
-            styles.saveBtn,
-            {
-              backgroundColor: saved ? colors.success + "20" : colors.primary,
-              opacity: saving || currentWords.length === 0 ? 0.5 : 1,
-            },
-          ]}
-        >
-          {saving ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : saved ? (
-            <MaterialIcons name="check" size={20} color={colors.success} />
-          ) : (
-            <>
-              <MaterialIcons name="bookmark" size={18} color="#fff" />
-              <Text style={styles.saveBtnText}>저장</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push("/test");
+            }}
+            disabled={currentWords.length < 3}
+            style={[
+              styles.headerBtn,
+              styles.quizBtn,
+              {
+                backgroundColor: colors.secondary,
+                opacity: currentWords.length < 3 ? 0.4 : 1,
+              },
+            ]}
+          >
+            <MaterialIcons name="school" size={18} color={colors.primary} />
+            <Text style={[styles.quizBtnText, { color: colors.primary }]}>퀴즈</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={saving || saved || currentWords.length === 0}
+            style={[
+              styles.headerBtn,
+              styles.saveBtn,
+              {
+                backgroundColor: saved ? colors.success + "20" : colors.primary,
+                opacity: saving || currentWords.length === 0 ? 0.5 : 1,
+              },
+            ]}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : saved ? (
+              <MaterialIcons name="check" size={20} color={colors.success} />
+            ) : (
+              <>
+                <MaterialIcons name="bookmark" size={18} color="#fff" />
+                <Text style={styles.saveBtnText}>저장</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {currentWords.length === 0 ? (
@@ -201,16 +222,27 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   headerBtn: {
-    width: 40,
     height: 40,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  quizBtn: {
+    flexDirection: "row",
+    gap: 5,
+  },
+  quizBtnText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 15,
   },
   saveBtn: {
-    width: "auto",
-    paddingHorizontal: 14,
     flexDirection: "row",
     gap: 5,
   },
