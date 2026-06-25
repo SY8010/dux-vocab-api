@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "646c88c8-954b-4461-8bfc-041ae56ebcab"
+      }
+    },
+    "android": {
+      "package": "com.withzest.workspace"
+    }
+  }
+}
