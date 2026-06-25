@@ -4,7 +4,9 @@ import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useVocab, WordEntry } from "@/context/VocabContext";
 
-const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+const API_BASE = __DEV__
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN ?? "localhost:5000"}`
+  : "https://dux-vocab-api.onrender.com";
 
 export function useAnalyze() {
   const { setCurrentWords } = useVocab();
