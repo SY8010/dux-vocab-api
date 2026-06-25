@@ -6,6 +6,10 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+app.get("/", (_req, res) => {
+  res.status(200).send("ok");
+});
+
 app.use(
   pinoHttp({
     logger,
