@@ -134,7 +134,7 @@ export default function TestScreen() {
       const word = sessionWords[currentIndex];
       const timer = setTimeout(() => {
         Speech.stop();
-        Speech.speak(word.definition_en, { language: "en-US", rate: 0.9 });
+        Speech.speak(word.definition_en, { language: "en-US", pitch: 1.0, rate: 0.9 });
       }, 350);
       return () => clearTimeout(timer);
     }

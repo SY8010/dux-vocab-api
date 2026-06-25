@@ -28,6 +28,7 @@ function speakOne(text: string, onDone?: () => void) {
   Speech.stop();
   Speech.speak(text, {
     language: "en-US",
+    pitch: 1.0,
     rate: 0.9,
     onDone,
     onError: onDone,
