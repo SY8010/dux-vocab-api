@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -48,8 +49,8 @@ export default function WordsScreen() {
     <View style={styles.listHeader}>
       <View
         style={[
-          styles.statsRow,
-          { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius },
+          styles.statsCard,
+          { backgroundColor: colors.card, borderRadius: colors.radius },
         ]}
       >
         <View style={styles.stat}>
@@ -83,13 +84,13 @@ export default function WordsScreen() {
             {
               backgroundColor: colors.warning + "22",
               borderColor: colors.warning,
-              borderRadius: colors.radius,
+              borderRadius: 16,
             },
           ]}
         >
-          <MaterialIcons name="error" size={18} color={colors.warning} />
+          <MaterialIcons name="star" size={18} color={colors.warning} />
           <Text style={[styles.warningText, { color: colors.warningForeground }]}>
-            {lowCount}개의 단어는 확인이 필요합니다. 노란색 카드를 탭하여 수정하세요.
+            {lowCount}개의 단어를 확인해주세요!
           </Text>
         </View>
       )}
@@ -97,23 +98,15 @@ export default function WordsScreen() {
   );
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
+    <LinearGradient
+      colors={[colors.gradientTop, colors.gradientBottom]}
+      style={styles.gradient}
     >
       {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: topPad + 8,
-            backgroundColor: colors.background,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
+      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={[styles.headerBtn, { backgroundColor: colors.secondary }]}
+          style={[styles.iconBtn, { backgroundColor: colors.card }]}
         >
           <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
@@ -130,38 +123,38 @@ export default function WordsScreen() {
             }}
             disabled={currentWords.length < 3}
             style={[
-              styles.headerBtn,
-              styles.quizBtn,
+              styles.headerPill,
               {
                 backgroundColor: colors.secondary,
+                borderColor: colors.primary,
                 opacity: currentWords.length < 3 ? 0.4 : 1,
               },
             ]}
           >
             <MaterialIcons name="school" size={18} color={colors.primary} />
-            <Text style={[styles.quizBtnText, { color: colors.primary }]}>퀴즈</Text>
+            <Text style={[styles.headerPillText, { color: colors.primary }]}>퀴즈</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handleSave}
             disabled={saving || saved || currentWords.length === 0}
             style={[
-              styles.headerBtn,
-              styles.saveBtn,
+              styles.headerPill,
               {
                 backgroundColor: saved ? colors.success + "20" : colors.primary,
+                borderColor: saved ? colors.success : colors.primary,
                 opacity: saving || currentWords.length === 0 ? 0.5 : 1,
               },
             ]}
           >
             {saving ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={colors.primaryForeground} size="small" />
             ) : saved ? (
-              <MaterialIcons name="check" size={20} color={colors.success} />
+              <MaterialIcons name="check" size={18} color={colors.success} />
             ) : (
               <>
                 <MaterialIcons name="bookmark" size={18} color="#fff" />
-                <Text style={styles.saveBtnText}>저장</Text>
+                <Text style={[styles.headerPillText, { color: "#fff" }]}>저장</Text>
               </>
             )}
           </TouchableOpacity>
@@ -170,19 +163,19 @@ export default function WordsScreen() {
 
       {currentWords.length === 0 ? (
         <View style={styles.empty}>
-          <MaterialIcons name="description" size={64} color={colors.mutedForeground} />
+          <MaterialIcons name="auto-stories" size={72} color={colors.primary + "60"} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-            단어가 없습니다
+            단어가 없어요
           </Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            카메라로 단어장을 촬영해주세요
+            카메라로 단어장을 촬영해보세요
           </Text>
           <TouchableOpacity
             onPress={() => router.replace("/camera")}
-            style={[styles.emptyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
+            style={[styles.emptyPill, { backgroundColor: colors.primary }]}
           >
-            <MaterialIcons name="photo-camera" size={20} color="#fff" />
-            <Text style={styles.emptyBtnText}>촬영하러 가기</Text>
+            <MaterialIcons name="photo-camera" size={22} color="#fff" />
+            <Text style={styles.emptyPillText}>촬영하러 가기</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -198,121 +191,105 @@ export default function WordsScreen() {
             { paddingBottom: botPad + 24 },
           ]}
           showsVerticalScrollIndicator={false}
-          scrollEnabled={!!currentWords.length}
         />
       )}
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  gradient: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    gap: 12,
+    gap: 10,
   },
   headerTitle: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
+    fontSize: 20,
+    fontFamily: "Baloo2_700Bold",
     flex: 1,
     textAlign: "center",
   },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  headerBtn: {
-    height: 40,
-    borderRadius: 12,
+  iconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  quizBtn: {
+  headerActions: { flexDirection: "row", gap: 8 },
+  headerPill: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    minHeight: 42,
   },
-  quizBtnText: {
-    fontFamily: "Inter_700Bold",
+  headerPillText: {
     fontSize: 15,
+    fontFamily: "Baloo2_700Bold",
   },
-  saveBtn: {
-    flexDirection: "row",
-    gap: 5,
-  },
-  saveBtnText: {
-    color: "#fff",
-    fontFamily: "Inter_700Bold",
-    fontSize: 15,
-  },
-  list: { paddingHorizontal: 16, paddingTop: 16 },
+  list: { paddingHorizontal: 16, paddingTop: 12 },
   listHeader: { gap: 12, marginBottom: 12 },
-  statsRow: {
+  statsCard: {
     flexDirection: "row",
-    borderWidth: 1,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3,
   },
   stat: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 16,
     gap: 2,
   },
-  statNum: {
-    fontSize: 28,
-    fontFamily: "Inter_700Bold",
-  },
-  statLabel: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-  },
+  statNum: { fontSize: 30, fontFamily: "Baloo2_800ExtraBold" },
+  statLabel: { fontSize: 13, fontFamily: "Jua_400Regular" },
   statDivider: { width: 1 },
   warningBanner: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 8,
-    padding: 12,
-    borderWidth: 1,
+    padding: 14,
+    borderWidth: 1.5,
   },
   warningText: {
     flex: 1,
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 19,
+    fontSize: 14,
+    fontFamily: "Jua_400Regular",
+    lineHeight: 20,
   },
   empty: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
+    gap: 14,
     paddingHorizontal: 32,
   },
-  emptyTitle: {
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
-  },
-  emptySub: {
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-  },
-  emptyBtn: {
+  emptyTitle: { fontSize: 24, fontFamily: "Baloo2_700Bold" },
+  emptySub: { fontSize: 16, fontFamily: "Jua_400Regular", textAlign: "center" },
+  emptyPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
+    gap: 10,
+    borderRadius: 999,
+    paddingVertical: 16,
+    paddingHorizontal: 28,
+    minHeight: 56,
     marginTop: 8,
   },
-  emptyBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-  },
+  emptyPillText: { color: "#fff", fontSize: 18, fontFamily: "Baloo2_700Bold" },
 });

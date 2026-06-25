@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { useRouter } from "expo-router";
@@ -67,15 +68,15 @@ export default function GalleryScreen() {
     setProcessing(true);
     try {
       const newPhotos: PickedPhoto[] = await Promise.all(
-        result.assets.map(async (asset) => {
-          const b64 = await resizeToBase64(asset.uri);
-          return { uri: asset.uri, base64: b64 };
-        })
+        result.assets.map(async (asset) => ({
+          uri: asset.uri,
+          base64: await resizeToBase64(asset.uri),
+        }))
       );
       setPhotos((prev) => [...prev, ...newPhotos].slice(0, MAX_PHOTOS));
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {
-      // silently ignore resize errors — uri still usable
+    } catch {
+      // silent
     } finally {
       setProcessing(false);
     }
@@ -91,28 +92,18 @@ export default function GalleryScreen() {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleAnalyze = () => {
-    analyze(photos.map((p) => p.base64));
-  };
-
   if (photos.length === 0 && !processing) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <LinearGradient
+      colors={[colors.gradientTop, colors.gradientBottom]}
+      style={styles.gradient}
+    >
       {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: topPad + 8,
-            backgroundColor: colors.background,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
+      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={[styles.headerBtn, { backgroundColor: colors.secondary }]}
+          style={[styles.iconBtn, { backgroundColor: colors.card }]}
         >
           <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
@@ -121,31 +112,26 @@ export default function GalleryScreen() {
           사진 올리기
         </Text>
 
-        <View style={[styles.counterBadge, { backgroundColor: colors.secondary }]}>
+        <View style={[styles.counterBadge, { backgroundColor: colors.primary + "20" }]}>
           <Text style={[styles.counterText, { color: colors.primary }]}>
             {photos.length} / {MAX_PHOTOS}
           </Text>
         </View>
       </View>
 
-      {/* Thumbnails grid */}
+      {/* Grid */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.grid, { paddingBottom: botPad + 160 }]}
         showsVerticalScrollIndicator={false}
       >
         {photos.map((photo, i) => (
-          <View
-            key={photo.uri + i}
-            style={[styles.thumbWrap, { borderRadius: colors.radius, borderColor: colors.border }]}
-          >
+          <View key={photo.uri + i} style={[styles.thumbWrap, { borderRadius: 20, borderColor: colors.border }]}>
             <Image source={{ uri: photo.uri }} style={styles.thumb} />
-            <TouchableOpacity
-              style={styles.deleteBtn}
-              onPress={() => deletePhoto(i)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <MaterialIcons name="cancel" size={28} color="#ff4444" />
+            <TouchableOpacity style={styles.deleteBtn} onPress={() => deletePhoto(i)}>
+              <View style={styles.deleteBg}>
+                <MaterialIcons name="close" size={18} color="#fff" />
+              </View>
             </TouchableOpacity>
             <View style={[styles.indexBadge, { backgroundColor: colors.primary }]}>
               <Text style={styles.indexText}>{i + 1}</Text>
@@ -153,56 +139,49 @@ export default function GalleryScreen() {
           </View>
         ))}
 
-        {/* Add more tile */}
         {photos.length < MAX_PHOTOS && (
           <TouchableOpacity
             style={[
               styles.addTile,
-              {
-                borderColor: colors.primary,
-                borderRadius: colors.radius,
-                backgroundColor: colors.secondary,
-              },
+              { borderColor: colors.primary, borderRadius: 20, backgroundColor: colors.card },
             ]}
             onPress={openPicker}
             disabled={processing}
             activeOpacity={0.8}
           >
             {processing ? (
-              <ActivityIndicator color={colors.primary} />
+              <ActivityIndicator color={colors.primary} size="large" />
             ) : (
               <>
-                <MaterialIcons name="add" size={36} color={colors.primary} />
-                <Text style={[styles.addText, { color: colors.primary }]}>추가</Text>
+                <View style={[styles.addIconCircle, { backgroundColor: colors.primary + "18" }]}>
+                  <MaterialIcons name="add" size={32} color={colors.primary} />
+                </View>
+                <Text style={[styles.addText, { color: colors.primary }]}>사진 추가</Text>
               </>
             )}
           </TouchableOpacity>
         )}
       </ScrollView>
 
-      {/* Bottom action bar */}
+      {/* Bottom bar */}
       <View
         style={[
           styles.bottomBar,
-          {
-            paddingBottom: botPad + 16,
-            backgroundColor: colors.background,
-            borderTopColor: colors.border,
-          },
+          { paddingBottom: botPad + 16, backgroundColor: colors.card },
         ]}
       >
         {error ? (
-          <View style={[styles.errorBox, { backgroundColor: "#ff000022", borderColor: "#ff444444" }]}>
-            <MaterialIcons name="error" size={15} color="#ff6666" />
-            <Text style={styles.errorText} numberOfLines={3}>
+          <View style={[styles.errorBox, { backgroundColor: colors.destructive + "15", borderColor: colors.destructive + "40" }]}>
+            <MaterialIcons name="error-outline" size={16} color={colors.destructive} />
+            <Text style={[styles.errorText, { color: colors.destructive }]} numberOfLines={3}>
               {error}
             </Text>
           </View>
         ) : null}
 
         <View style={styles.actionRow}>
-          <View style={styles.hint}>
-            <MaterialIcons name="info" size={16} color={colors.mutedForeground} />
+          <View style={styles.hintWrap}>
+            <MaterialIcons name="eco" size={16} color={colors.primary} />
             <Text style={[styles.hintText, { color: colors.mutedForeground }]}>
               불필요한 사진은 X로 삭제하세요
             </Text>
@@ -210,111 +189,94 @@ export default function GalleryScreen() {
 
           <TouchableOpacity
             style={[
-              styles.analyzeBtn,
+              styles.analyzePill,
               {
                 backgroundColor:
                   photos.length === 0 || loading || processing
-                    ? colors.muted
+                    ? colors.border
                     : colors.primary,
-                borderRadius: colors.radius,
               },
             ]}
-            onPress={handleAnalyze}
+            onPress={() => analyze(photos.map((p) => p.base64))}
             disabled={photos.length === 0 || loading || processing}
             activeOpacity={0.88}
           >
             {loading ? (
               <>
                 <ActivityIndicator color="#fff" size="small" />
-                <Text style={styles.analyzeBtnText}>분석 중...</Text>
+                <Text style={styles.analyzePillText}>분석 중...</Text>
               </>
             ) : (
               <>
                 <MaterialIcons name="auto-awesome" size={20} color="#fff" />
-                <Text style={styles.analyzeBtnText}>분석 시작</Text>
+                <Text style={styles.analyzePillText}>분석 시작</Text>
               </>
             )}
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  gradient: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 12,
-    borderBottomWidth: 1,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    flex: 1,
-    textAlign: "center",
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  headerTitle: { fontSize: 20, fontFamily: "Baloo2_700Bold", flex: 1, textAlign: "center" },
+  iconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   counterBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
   },
-  counterText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 14,
-  },
+  counterText: { fontFamily: "Baloo2_700Bold", fontSize: 15 },
   scroll: { flex: 1 },
-  grid: {
-    padding: 16,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
+  grid: { padding: 16, flexDirection: "row", flexWrap: "wrap", gap: 14 },
   thumbWrap: {
     width: "47%",
     aspectRatio: 4 / 3,
-    borderWidth: 1,
+    borderWidth: 1.5,
     overflow: "visible",
     position: "relative",
   },
-  thumb: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
-  },
-  deleteBtn: {
-    position: "absolute",
-    top: -10,
-    right: -10,
-    backgroundColor: "#fff",
+  thumb: { width: "100%", height: "100%", borderRadius: 18 },
+  deleteBtn: { position: "absolute", top: -10, right: -10, zIndex: 10 },
+  deleteBg: {
+    width: 28,
+    height: 28,
     borderRadius: 14,
-    zIndex: 10,
+    backgroundColor: "#E57373",
+    alignItems: "center",
+    justifyContent: "center",
   },
   indexBadge: {
     position: "absolute",
     bottom: 8,
     left: 8,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  indexText: {
-    color: "#fff",
-    fontSize: 13,
-    fontFamily: "Inter_700Bold",
-  },
+  indexText: { color: "#fff", fontSize: 13, fontFamily: "Baloo2_700Bold" },
   addTile: {
     width: "47%",
     aspectRatio: 4 / 3,
@@ -322,64 +284,57 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: 6,
   },
-  addText: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
+  addIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
   },
+  addText: { fontSize: 15, fontFamily: "Baloo2_600SemiBold" },
   bottomBar: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 12,
+    paddingTop: 14,
     paddingHorizontal: 16,
-    borderTopWidth: 1,
     gap: 10,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 8,
   },
   errorBox: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 6,
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
   },
-  errorText: {
-    color: "#ff8888",
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    flex: 1,
-    lineHeight: 17,
-  },
+  errorText: { fontSize: 12, fontFamily: "Baloo2_400Regular", flex: 1, lineHeight: 17 },
   actionRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
   },
-  hint: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  hintText: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    flex: 1,
-  },
-  analyzeBtn: {
+  hintWrap: { flex: 1, flexDirection: "row", alignItems: "center", gap: 6 },
+  hintText: { fontSize: 13, fontFamily: "Jua_400Regular", flex: 1 },
+  analyzePill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    borderRadius: 999,
     paddingHorizontal: 22,
     paddingVertical: 14,
+    minHeight: 52,
   },
-  analyzeBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-  },
+  analyzePillText: { color: "#fff", fontSize: 16, fontFamily: "Baloo2_700Bold" },
 });

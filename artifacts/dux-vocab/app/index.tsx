@@ -7,6 +7,7 @@ import {
   StatusBar,
   Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -21,247 +22,218 @@ export default function HomeScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const handleGallery = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push("/gallery");
-  };
-
-  const handleCamera = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push("/camera");
-  };
-
-  const handleSaved = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push("/saved");
-  };
-
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          paddingTop: topPad + 24,
-          paddingBottom: botPad + 24,
-        },
-      ]}
+    <LinearGradient
+      colors={[colors.gradientTop, colors.gradientBottom]}
+      style={styles.gradient}
     >
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
-      {/* Logo / Title */}
-      <View style={styles.topSection}>
-        <View
-          style={[
-            styles.iconRing,
-            {
-              backgroundColor: colors.primary + "18",
-              borderColor: colors.primary + "40",
-            },
-          ]}
-        >
-          <View style={[styles.iconCircle, { backgroundColor: colors.primary }]}>
-            <MaterialIcons name="menu-book" size={52} color="#fff" />
+      <View
+        style={[
+          styles.container,
+          { paddingTop: topPad + 20, paddingBottom: botPad + 24 },
+        ]}
+      >
+        {/* ── Decorative motif row ── */}
+        <View style={styles.motifRow}>
+          <View style={[styles.motifIcon, { backgroundColor: colors.accent + "25" }]}>
+            <MaterialIcons name="mail-outline" size={20} color={colors.skyBlue} />
+          </View>
+          <View style={[styles.motifIcon, { backgroundColor: colors.primary + "20" }]}>
+            <MaterialIcons name="eco" size={20} color={colors.primary} />
+          </View>
+          <View style={[styles.motifIcon, { backgroundColor: colors.sunshine + "30" }]}>
+            <MaterialIcons name="star" size={20} color={colors.sunshine} />
+          </View>
+          <View style={[styles.motifIcon, { backgroundColor: colors.softGreen + "40" }]}>
+            <MaterialIcons name="local-florist" size={20} color={colors.softGreen} />
+          </View>
+          <View style={[styles.motifIcon, { backgroundColor: colors.accent + "25" }]}>
+            <MaterialIcons name="wb-sunny" size={20} color={colors.skyBlue} />
           </View>
         </View>
 
-        <Text style={[styles.title, { color: colors.foreground }]}>
-          DUX Vocabulary Test
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          created by RangRang's Dad
-        </Text>
-      </View>
-
-      {/* Add a vocabulary set */}
-      <View style={styles.addSection}>
-        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
-          단어장 추가
-        </Text>
-
-        {/* Primary — gallery */}
-        <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            { backgroundColor: colors.primary, borderRadius: colors.radius + 4 },
-          ]}
-          onPress={handleGallery}
-          activeOpacity={0.88}
-        >
-          <View style={styles.btnInner}>
-            <View style={[styles.btnIconWrap, { backgroundColor: "#ffffff30" }]}>
-              <MaterialIcons name="photo-library" size={28} color="#fff" />
-            </View>
-            <View style={styles.btnTextWrap}>
-              <Text style={styles.primaryButtonText}>사진 올리기</Text>
-              <Text style={styles.primaryButtonSub}>
-                갤러리에서 1–5장 선택
-              </Text>
-            </View>
-            <MaterialIcons name="chevron-right" size={22} color="#ffffff90" />
+        {/* ── Title area ── */}
+        <View style={styles.titleArea}>
+          <View style={[styles.logoCircle, { backgroundColor: colors.primary }]}>
+            <MaterialIcons name="menu-book" size={48} color="#fff" />
           </View>
-        </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.foreground }]}>
+            DUX Vocabulary Test
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            created by RangRang's Dad
+          </Text>
+        </View>
 
-        {/* Secondary — camera */}
-        <TouchableOpacity
-          style={[
-            styles.secondaryButton,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderRadius: colors.radius + 4,
-            },
-          ]}
-          onPress={handleCamera}
-          activeOpacity={0.88}
-        >
-          <View style={styles.btnInner}>
-            <View style={[styles.btnIconWrap, { backgroundColor: colors.secondary }]}>
-              <MaterialIcons name="photo-camera" size={26} color={colors.primary} />
-            </View>
-            <View style={styles.btnTextWrap}>
-              <Text style={[styles.secondaryButtonText, { color: colors.foreground }]}>
-                직접 찍기
-              </Text>
-              <Text style={[styles.secondaryButtonSub, { color: colors.mutedForeground }]}>
-                카메라로 단어장 촬영
-              </Text>
-            </View>
-            <MaterialIcons name="chevron-right" size={22} color={colors.mutedForeground} />
-          </View>
-        </TouchableOpacity>
+        {/* ── Action buttons ── */}
+        <View style={styles.actions}>
+          {/* Primary — camera */}
+          <TouchableOpacity
+            style={[styles.pillPrimary, { backgroundColor: colors.primary }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push("/camera");
+            }}
+            activeOpacity={0.85}
+          >
+            <MaterialIcons name="photo-camera" size={26} color="#fff" />
+            <Text style={styles.pillPrimaryText}>단어장 촬영 시작</Text>
+          </TouchableOpacity>
+
+          {/* Secondary — gallery */}
+          <TouchableOpacity
+            style={[
+              styles.pillSecondary,
+              { backgroundColor: colors.card, borderColor: colors.skyBlue },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/gallery");
+            }}
+            activeOpacity={0.85}
+          >
+            <MaterialIcons name="photo-library" size={24} color={colors.skyBlue} />
+            <Text style={[styles.pillSecondaryText, { color: colors.skyBlue }]}>
+              사진으로 추가
+            </Text>
+          </TouchableOpacity>
+
+          {/* Tertiary — saved sets */}
+          <TouchableOpacity
+            style={[
+              styles.pillSecondary,
+              { backgroundColor: colors.card, borderColor: colors.primary },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/saved");
+            }}
+            activeOpacity={0.85}
+          >
+            <MaterialIcons name="folder-open" size={24} color={colors.primary} />
+            <Text style={[styles.pillSecondaryText, { color: colors.primary }]}>
+              저장된 단어장
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Bottom decoration ── */}
+        <View style={styles.bottomRow}>
+          <MaterialIcons name="eco" size={14} color={colors.softGreen} />
+          <Text style={[styles.bottomHint, { color: colors.mutedForeground }]}>
+            사진을 찍거나 갤러리에서 골라 단어를 배워요
+          </Text>
+          <MaterialIcons name="eco" size={14} color={colors.softGreen} />
+        </View>
       </View>
-
-      {/* Saved sets */}
-      <TouchableOpacity
-        style={[
-          styles.savedButton,
-          {
-            backgroundColor: colors.muted,
-            borderRadius: colors.radius + 4,
-          },
-        ]}
-        onPress={handleSaved}
-        activeOpacity={0.88}
-      >
-        <MaterialIcons name="folder-open" size={22} color={colors.primary} />
-        <Text style={[styles.savedButtonText, { color: colors.foreground }]}>
-          저장된 단어장
-        </Text>
-        <MaterialIcons name="chevron-right" size={18} color={colors.mutedForeground} style={{ marginLeft: "auto" }} />
-      </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: { flex: 1 },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
     justifyContent: "space-between",
   },
-  topSection: {
+
+  motifRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+  },
+  motifIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
-    paddingTop: 12,
+    justifyContent: "center",
+  },
+
+  titleArea: {
+    alignItems: "center",
     gap: 14,
   },
-  iconRing: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    borderWidth: 2,
+  logoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
-  },
-  iconCircle: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: "#4FC3A1",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 10,
   },
   title: {
     fontSize: 28,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Baloo2_800ExtraBold",
     textAlign: "center",
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+    fontFamily: "Jua_400Regular",
     textAlign: "center",
   },
-  addSection: {
-    gap: 12,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    paddingLeft: 4,
-    marginBottom: 2,
-  },
-  primaryButton: {
-    shadowColor: "#3B6FE8",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    elevation: 6,
-  },
-  secondaryButton: {
-    borderWidth: 1.5,
-  },
-  btnInner: {
+
+  actions: { gap: 14 },
+
+  pillPrimary: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-    gap: 14,
-  },
-  btnIconWrap: {
-    width: 50,
-    height: 50,
-    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
+    gap: 12,
+    borderRadius: 999,
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    minHeight: 60,
+    shadowColor: "#4FC3A1",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  btnTextWrap: {
-    flex: 1,
-    gap: 3,
-  },
-  primaryButtonText: {
-    fontSize: 19,
-    fontFamily: "Inter_700Bold",
+  pillPrimaryText: {
     color: "#fff",
+    fontSize: 20,
+    fontFamily: "Baloo2_700Bold",
   },
-  primaryButtonSub: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: "#ffffff99",
-  },
-  secondaryButtonText: {
-    fontSize: 19,
-    fontFamily: "Inter_700Bold",
-  },
-  secondaryButtonSub: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-  },
-  savedButton: {
+
+  pillSecondary: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
+    gap: 12,
+    borderRadius: 999,
     paddingVertical: 16,
-    paddingHorizontal: 18,
+    paddingHorizontal: 32,
+    minHeight: 56,
+    borderWidth: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  savedButtonText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
+  pillSecondaryText: {
+    fontSize: 18,
+    fontFamily: "Baloo2_700Bold",
+  },
+
+  bottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  bottomHint: {
+    fontSize: 13,
+    fontFamily: "Jua_400Regular",
+    textAlign: "center",
   },
 });

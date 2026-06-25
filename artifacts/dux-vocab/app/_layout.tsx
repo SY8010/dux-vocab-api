@@ -1,11 +1,13 @@
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
+  Baloo2_400Regular,
+  Baloo2_500Medium,
+  Baloo2_600SemiBold,
+  Baloo2_700Bold,
+  Baloo2_800ExtraBold,
+} from "@expo-google-fonts/baloo-2";
+import { Jua_400Regular } from "@expo-google-fonts/jua";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
@@ -28,16 +30,19 @@ function RootLayoutNav() {
       <Stack.Screen name="camera" options={{ headerShown: false, animation: "slide_from_bottom" }} />
       <Stack.Screen name="words" options={{ headerShown: false, animation: "slide_from_right" }} />
       <Stack.Screen name="saved" options={{ headerShown: false, animation: "slide_from_right" }} />
+      <Stack.Screen name="test" options={{ headerShown: false, animation: "slide_from_bottom" }} />
     </Stack>
   );
 }
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+    Baloo2_400Regular,
+    Baloo2_500Medium,
+    Baloo2_600SemiBold,
+    Baloo2_700Bold,
+    Baloo2_800ExtraBold,
+    Jua_400Regular,
   });
 
   useEffect(() => {
@@ -52,7 +57,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView>
+          <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
               <VocabProvider>
                 <RootLayoutNav />

@@ -1,39 +1,47 @@
 const colors = {
   light: {
-    text: "#1A1D2E",
-    tint: "#3B6FE8",
+    text: "#20453E",
+    tint: "#4FC3A1",
 
-    background: "#F5F7FF",
-    foreground: "#1A1D2E",
+    gradientTop: "#EAF6FB",
+    gradientBottom: "#E8F7F2",
+
+    background: "#EAF6FB",
+    foreground: "#20453E",
 
     card: "#FFFFFF",
-    cardForeground: "#1A1D2E",
+    cardForeground: "#20453E",
 
-    primary: "#3B6FE8",
+    primary: "#4FC3A1",
     primaryForeground: "#FFFFFF",
 
-    secondary: "#EEF1FF",
-    secondaryForeground: "#3B6FE8",
+    secondary: "#E3F5EF",
+    secondaryForeground: "#4FC3A1",
 
-    muted: "#E8EAF6",
-    mutedForeground: "#6B7280",
+    muted: "#EAF6FB",
+    mutedForeground: "#5B8A82",
 
-    accent: "#FF6B6B",
+    accent: "#7FC4E8",
     accentForeground: "#FFFFFF",
 
-    destructive: "#EF4444",
+    destructive: "#E57373",
     destructiveForeground: "#FFFFFF",
 
-    border: "#DDE1F0",
-    input: "#DDE1F0",
+    border: "#B8E0D5",
+    input: "#B8E0D5",
 
-    warning: "#FFD700",
-    warningForeground: "#92600A",
-    success: "#4CAF50",
+    warning: "#FFCB5B",
+    warningForeground: "#7A5200",
+
+    success: "#3DAF8B",
     successForeground: "#FFFFFF",
+
+    sunshine: "#FFCB5B",
+    skyBlue: "#7FC4E8",
+    softGreen: "#A9DCC0",
   },
 
-  radius: 16,
+  radius: 24,
 };
 
 export default colors;

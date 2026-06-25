@@ -22,7 +22,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// ─── helpers ──────────────────────────────────────────────────────────────────
 
 function speakOne(text: string, onDone?: () => void) {
   Speech.stop();
@@ -39,7 +39,7 @@ function pause(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ─── SpeakButton ─────────────────────────────────────────────────────────────
+// ─── SpeakButton ──────────────────────────────────────────────────────────────
 
 interface SpeakBtnProps {
   text: string;
@@ -48,14 +48,14 @@ interface SpeakBtnProps {
   bg?: string;
 }
 
-function SpeakBtn({ text, size = 22, color, bg }: SpeakBtnProps) {
+function SpeakBtn({ text, size = 20, color, bg }: SpeakBtnProps) {
   return (
     <TouchableOpacity
       onPress={() => speakOne(text)}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       style={[
         styles.speakBtn,
-        bg ? { backgroundColor: bg, borderRadius: 10 } : undefined,
+        bg ? { backgroundColor: bg, borderRadius: 20 } : undefined,
       ]}
       activeOpacity={0.7}
     >
@@ -117,44 +117,32 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
   };
 
   const playAll = async () => {
-    if (isPlayingAll) {
-      stopAll();
-      return;
-    }
+    if (isPlayingAll) { stopAll(); return; }
     cancelRef.current = false;
     setIsPlayingAll(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    const steps: string[] = [
-      word.word,
-      word.definition_en,
-      ...word.examples_en,
-    ];
-
+    const steps = [word.word, word.definition_en, ...word.examples_en];
     for (let i = 0; i < steps.length; i++) {
       if (cancelRef.current) break;
-      await new Promise<void>((resolve) => {
-        speakOne(steps[i], resolve);
-      });
+      await new Promise<void>((resolve) => speakOne(steps[i], resolve));
       if (cancelRef.current) break;
-      if (i < steps.length - 1) {
-        await pause(i === 0 ? 350 : 200);
-      }
+      if (i < steps.length - 1) await pause(i === 0 ? 350 : 200);
     }
-
     if (!cancelRef.current) setIsPlayingAll(false);
   };
 
-  const cardBg = isLowConfidence ? colors.warning + "22" : colors.card;
-  const borderColor = isLowConfidence ? colors.warning : colors.border;
-
+  // POS colors in new palette
   const posColors: Record<string, string> = {
-    "N.": "#3B6FE8",
-    "v.": "#22C55E",
-    "adj.": "#F59E0B",
-    "adv.": "#A855F7",
+    "N.":   "#4FC3A1",
+    "v.":   "#7FC4E8",
+    "adj.": "#FFCB5B",
+    "adv.": "#A9DCC0",
   };
   const posColor = posColors[word.pos] ?? colors.primary;
+
+  const cardBorderColor = isLowConfidence ? colors.warning : colors.border;
+  const cardBg = isLowConfidence ? colors.warning + "12" : colors.card;
 
   return (
     <View
@@ -162,19 +150,15 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
         styles.card,
         {
           backgroundColor: cardBg,
-          borderColor,
+          borderColor: cardBorderColor,
           borderRadius: colors.radius,
         },
       ]}
     >
       {/* ── Collapsed header ── */}
-      <TouchableOpacity
-        onPress={toggle}
-        activeOpacity={0.85}
-        style={styles.header}
-      >
+      <TouchableOpacity onPress={toggle} activeOpacity={0.85} style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={[styles.posBadge, { backgroundColor: posColor + "20" }]}>
+          <View style={[styles.posBadge, { backgroundColor: posColor + "22" }]}>
             <Text style={[styles.posText, { color: posColor }]}>{word.pos}</Text>
           </View>
 
@@ -185,23 +169,16 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               style={[
                 styles.editInput,
                 styles.wordEditInput,
-                { color: colors.foreground, borderColor: colors.border },
+                { color: colors.foreground, borderColor: colors.border, borderRadius: 12 },
               ]}
               autoFocus
             />
           ) : (
-            <Text style={[styles.wordText, { color: colors.foreground }]}>
-              {word.word}
-            </Text>
+            <Text style={[styles.wordText, { color: colors.foreground }]}>{word.word}</Text>
           )}
 
           {!editing && (
-            <SpeakBtn
-              text={word.word}
-              size={22}
-              color={colors.primary}
-              bg={colors.secondary}
-            />
+            <SpeakBtn text={word.word} size={20} color={colors.primary} bg={colors.secondary} />
           )}
         </View>
 
@@ -213,7 +190,7 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               style={[
                 styles.editInput,
                 styles.koEditInput,
-                { color: colors.mutedForeground, borderColor: colors.border },
+                { color: colors.mutedForeground, borderColor: colors.border, borderRadius: 10 },
               ]}
               placeholder="뜻"
               placeholderTextColor={colors.mutedForeground + "80"}
@@ -223,36 +200,30 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               {word.word_ko}
             </Text>
           )}
+
           {isLowConfidence && !editing && (
-            <MaterialIcons
-              name="error"
-              size={18}
-              color={colors.warning}
-              style={{ marginLeft: 4 }}
-            />
+            <MaterialIcons name="star" size={16} color={colors.warning} style={{ marginLeft: 4 }} />
           )}
           {!editing && (
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
                 if (!expanded) {
-                  LayoutAnimation.configureNext(
-                    LayoutAnimation.Presets.easeInEaseOut
-                  );
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                   setExpanded(true);
                 }
                 startEdit();
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={styles.headerEditBtn}
+              style={[styles.editBtn, { backgroundColor: colors.secondary }]}
               activeOpacity={0.7}
             >
-              <MaterialIcons name="edit" size={16} color={colors.mutedForeground} />
+              <MaterialIcons name="edit" size={15} color={colors.primary} />
             </TouchableOpacity>
           )}
           <MaterialIcons
             name={expanded ? "expand-less" : "expand-more"}
-            size={22}
+            size={24}
             color={colors.mutedForeground}
             style={{ marginLeft: 4 }}
           />
@@ -261,52 +232,34 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
 
       {/* ── Expanded body ── */}
       {expanded && (
-        <View style={[styles.body, { borderTopColor: borderColor }]}>
-
+        <View style={[styles.body, { borderTopColor: cardBorderColor }]}>
           <Text style={[styles.sectionLabel, { color: colors.primary }]}>
             English Definition
           </Text>
           <View style={styles.lineWithPlay}>
-            <Text
-              style={[styles.defText, { color: colors.foreground, flex: 1 }]}
-            >
+            <Text style={[styles.defText, { color: colors.foreground, flex: 1 }]}>
               {word.definition_en}
             </Text>
-            <SpeakBtn
-              text={word.definition_en}
-              size={20}
-              color={colors.primary}
-              bg={colors.secondary}
-            />
+            <SpeakBtn text={word.definition_en} size={20} color={colors.primary} bg={colors.secondary} />
           </View>
 
           {word.examples_en.length > 0 && (
             <View style={styles.examplesBlock}>
               {word.examples_en.map((ex, i) => (
                 <View key={i} style={styles.exampleRow}>
-                  <Text
-                    style={[
-                      styles.exampleText,
-                      { color: colors.mutedForeground, flex: 1 },
-                    ]}
-                  >
+                  <Text style={[styles.exampleText, { color: colors.mutedForeground, flex: 1 }]}>
                     • {ex}
                   </Text>
-                  <SpeakBtn
-                    text={ex}
-                    size={18}
-                    color={colors.mutedForeground}
-                  />
+                  <SpeakBtn text={ex} size={18} color={colors.mutedForeground} />
                 </View>
               ))}
             </View>
           )}
 
-          <View style={[styles.divider, { backgroundColor: borderColor }]} />
+          <View style={[styles.divider, { backgroundColor: cardBorderColor }]} />
 
-          <Text style={[styles.sectionLabel, { color: colors.accent }]}>
-            한국어
-          </Text>
+          <Text style={[styles.sectionLabel, { color: colors.skyBlue }]}>한국어</Text>
+
           {editing ? (
             <TextInput
               value={editDefKo}
@@ -314,58 +267,46 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               style={[
                 styles.editInput,
                 styles.defEditInput,
-                { color: colors.foreground, borderColor: colors.border },
+                { color: colors.foreground, borderColor: colors.border, borderRadius: 12 },
               ]}
               multiline
               placeholder="한국어 뜻 입력"
               placeholderTextColor={colors.mutedForeground + "80"}
             />
           ) : (
-            <Text style={[styles.defText, { color: colors.foreground }]}>
-              {word.definition_ko}
-            </Text>
+            <Text style={[styles.defText, { color: colors.foreground }]}>{word.definition_ko}</Text>
           )}
 
           {!editing && word.examples_ko.length > 0 && (
             <View style={styles.examplesBlock}>
               {word.examples_ko.map((ex, i) => (
-                <Text
-                  key={i}
-                  style={[styles.exampleText, { color: colors.mutedForeground }]}
-                >
+                <Text key={i} style={[styles.exampleText, { color: colors.mutedForeground }]}>
                   • {ex}
                 </Text>
               ))}
             </View>
           )}
 
-          {/* ── Action row ── */}
+          {/* Action row */}
           <View style={styles.actionRow}>
             <TouchableOpacity
               onPress={playAll}
               style={[
                 styles.listenAllBtn,
                 {
-                  backgroundColor: isPlayingAll
-                    ? colors.accent + "20"
-                    : colors.primary + "15",
-                  borderRadius: 12,
+                  backgroundColor: isPlayingAll ? colors.accent + "20" : colors.primary + "12",
                   borderColor: isPlayingAll ? colors.accent : colors.primary,
+                  borderRadius: 999,
                 },
               ]}
               activeOpacity={0.8}
             >
               <MaterialIcons
                 name={isPlayingAll ? "stop" : "play-arrow"}
-                size={24}
+                size={22}
                 color={isPlayingAll ? colors.accent : colors.primary}
               />
-              <Text
-                style={[
-                  styles.listenAllText,
-                  { color: isPlayingAll ? colors.accent : colors.primary },
-                ]}
-              >
+              <Text style={[styles.listenAllText, { color: isPlayingAll ? colors.accent : colors.primary }]}>
                 {isPlayingAll ? "멈추기" : "전체 듣기"}
               </Text>
             </TouchableOpacity>
@@ -374,46 +315,26 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
               <>
                 <TouchableOpacity
                   onPress={saveEdit}
-                  style={[
-                    styles.actionBtn,
-                    { backgroundColor: colors.success + "20" },
-                  ]}
+                  style={[styles.actionBtn, { backgroundColor: colors.success + "20", borderRadius: 999 }]}
                 >
                   <MaterialIcons name="check" size={20} color={colors.success} />
-                  <Text style={[styles.actionBtnText, { color: colors.success }]}>
-                    저장
-                  </Text>
+                  <Text style={[styles.actionBtnText, { color: colors.success }]}>저장</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={cancelEdit}
-                  style={[
-                    styles.actionBtn,
-                    { backgroundColor: colors.muted },
-                  ]}
+                  style={[styles.actionBtn, { backgroundColor: colors.muted, borderRadius: 999 }]}
                 >
                   <MaterialIcons name="close" size={20} color={colors.mutedForeground} />
-                  <Text
-                    style={[
-                      styles.actionBtnText,
-                      { color: colors.mutedForeground },
-                    ]}
-                  >
-                    취소
-                  </Text>
+                  <Text style={[styles.actionBtnText, { color: colors.mutedForeground }]}>취소</Text>
                 </TouchableOpacity>
               </>
             ) : (
               <TouchableOpacity
                 onPress={startEdit}
-                style={[
-                  styles.actionBtn,
-                  { backgroundColor: colors.secondary },
-                ]}
+                style={[styles.actionBtn, { backgroundColor: colors.secondary, borderRadius: 999 }]}
               >
                 <MaterialIcons name="edit" size={18} color={colors.primary} />
-                <Text style={[styles.actionBtnText, { color: colors.primary }]}>
-                  수정
-                </Text>
+                <Text style={[styles.actionBtnText, { color: colors.primary }]}>수정</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -428,99 +349,62 @@ export function WordCard({ word, onUpdate }: WordCardProps) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1.5,
-    marginBottom: 10,
+    marginBottom: 12,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  headerLeft: {
-    flexDirection: "row",
+  headerLeft: { flexDirection: "row", alignItems: "center", flex: 1, gap: 10 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: 160 },
+  posBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  posText: { fontSize: 12, fontFamily: "Baloo2_600SemiBold" },
+  wordText: { fontSize: 20, fontFamily: "Baloo2_700Bold", flexShrink: 1 },
+  koWord: { fontSize: 15, fontFamily: "Jua_400Regular", textAlign: "right", flexShrink: 1 },
+  editBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
-    flex: 1,
-    gap: 8,
-  },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-    maxWidth: 160,
-  },
-  posBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  posText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
-  wordText: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    flexShrink: 1,
-  },
-  koWord: {
-    fontSize: 15,
-    fontFamily: "Inter_500Medium",
-    textAlign: "right",
-    flexShrink: 1,
+    justifyContent: "center",
+    marginLeft: 4,
   },
   body: {
-    paddingHorizontal: 14,
-    paddingBottom: 14,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
     borderTopWidth: 1,
-    paddingTop: 12,
-    gap: 6,
+    paddingTop: 14,
+    gap: 8,
   },
   sectionLabel: {
     fontSize: 11,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Baloo2_700Bold",
     letterSpacing: 0.8,
     textTransform: "uppercase",
     marginTop: 4,
   },
-  defText: {
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 22,
-  },
-  lineWithPlay: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-  },
-  examplesBlock: {
-    gap: 6,
-    paddingLeft: 4,
-  },
-  exampleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
+  defText: { fontSize: 16, fontFamily: "Baloo2_400Regular", lineHeight: 24 },
+  lineWithPlay: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  examplesBlock: { gap: 6, paddingLeft: 4 },
+  exampleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   exampleText: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 19,
+    fontSize: 14,
+    fontFamily: "Baloo2_400Regular",
+    lineHeight: 20,
     fontStyle: "italic",
     flexShrink: 1,
   },
-  divider: {
-    height: 1,
-    marginVertical: 6,
-  },
-  actionRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 10,
-    flexWrap: "wrap",
-    alignItems: "center",
-  },
+  divider: { height: 1, marginVertical: 6 },
+  actionRow: { flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap", alignItems: "center" },
   listenAllBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -529,53 +413,24 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderWidth: 1.5,
   },
-  listenAllText: {
-    fontSize: 15,
-    fontFamily: "Inter_700Bold",
-  },
+  listenAllText: { fontSize: 15, fontFamily: "Baloo2_700Bold" },
   actionBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 10,
   },
-  actionBtnText: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-  },
-  speakBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerEditBtn: {
-    width: 32,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 4,
-  },
+  actionBtnText: { fontSize: 14, fontFamily: "Baloo2_600SemiBold" },
+  speakBtn: { width: 38, height: 38, alignItems: "center", justifyContent: "center" },
   editInput: {
-    borderWidth: 1,
-    borderRadius: 8,
+    borderWidth: 1.5,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Baloo2_400Regular",
     fontSize: 15,
   },
-  wordEditInput: {
-    flex: 1,
-    fontSize: 17,
-  },
-  koEditInput: {
-    width: 100,
-    fontSize: 14,
-  },
-  defEditInput: {
-    minHeight: 60,
-    textAlignVertical: "top",
-  },
+  wordEditInput: { flex: 1, fontSize: 18 },
+  koEditInput: { width: 100, fontSize: 14 },
+  defEditInput: { minHeight: 64, textAlignVertical: "top" },
 });

@@ -9,7 +9,9 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Animated,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Speech from "expo-speech";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -72,8 +74,6 @@ function buildHint(word: string, level: 1 | 2): string {
     .join(" ");
 }
 
-// ─── types ────────────────────────────────────────────────────────────────────
-
 type Phase = "question" | "retry" | "correct" | "wrong" | "summary";
 
 // ─── component ────────────────────────────────────────────────────────────────
@@ -97,6 +97,40 @@ export default function TestScreen() {
   const [praiseMsg, setPraiseMsg] = useState("");
 
   const inputRef = useRef<TextInput>(null);
+  const starScale = useRef(new Animated.Value(0)).current;
+  const starOpacity = useRef(new Animated.Value(0)).current;
+  const shakeX = useRef(new Animated.Value(0)).current;
+
+  // ── animations ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (phase === "correct") {
+      starScale.setValue(0);
+      starOpacity.setValue(0);
+      Animated.parallel([
+        Animated.spring(starScale, {
+          toValue: 1,
+          friction: 3,
+          tension: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(starOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    if (phase === "wrong") {
+      shakeX.setValue(0);
+      Animated.sequence([
+        Animated.timing(shakeX, { toValue: 14, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: -14, duration: 80, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: 10, duration: 70, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: -8, duration: 70, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: 0, duration: 50, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [phase]);
 
   // ── session init ────────────────────────────────────────────────────────────
   const startSession = useCallback((words: WordEntry[]) => {
@@ -118,19 +152,13 @@ export default function TestScreen() {
   }, []);
 
   useEffect(() => {
-    if (currentWords.length > 0) {
-      startSession(currentWords);
-    }
+    if (currentWords.length > 0) startSession(currentWords);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── auto-play TTS on new question ───────────────────────────────────────────
+  // ── auto TTS ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (
-      phase === "question" &&
-      sessionWords.length > 0 &&
-      currentIndex < sessionWords.length
-    ) {
+    if (phase === "question" && sessionWords.length > 0 && currentIndex < sessionWords.length) {
       const word = sessionWords[currentIndex];
       const timer = setTimeout(() => {
         Speech.stop();
@@ -140,7 +168,6 @@ export default function TestScreen() {
     }
   }, [currentIndex, phase, sessionWords]);
 
-  // ── helpers ─────────────────────────────────────────────────────────────────
   const currentWord = sessionWords[currentIndex] ?? null;
   const totalWords = sessionWords.length;
 
@@ -203,122 +230,85 @@ export default function TestScreen() {
   // ── guards ──────────────────────────────────────────────────────────────────
   if (currentWords.length === 0) {
     return (
-      <View
-        style={[
-          styles.centered,
-          { backgroundColor: colors.background, paddingTop: insets.top },
-        ]}
-      >
-        <MaterialIcons name="school" size={64} color={colors.mutedForeground} />
-        <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-          단어가 없습니다
-        </Text>
-        <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-          먼저 단어장을 불러오세요
-        </Text>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={[
-            styles.bigBtn,
-            { backgroundColor: colors.primary, borderRadius: colors.radius },
-          ]}
-        >
-          <Text style={styles.bigBtnText}>돌아가기</Text>
-        </TouchableOpacity>
-      </View>
+      <LinearGradient colors={[colors.gradientTop, colors.gradientBottom]} style={styles.gradient}>
+        <View style={[styles.centered, { paddingTop: insets.top }]}>
+          <MaterialIcons name="school" size={72} color={colors.primary + "80"} />
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>단어가 없어요</Text>
+          <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
+            먼저 단어장을 불러오세요
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={[styles.pill, { backgroundColor: colors.primary }]}
+          >
+            <Text style={styles.pillText}>돌아가기</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     );
   }
 
   if (sessionWords.length === 0) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
+      <LinearGradient colors={[colors.gradientTop, colors.gradientBottom]} style={styles.gradient}>
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.primary} size="large" />
+        </View>
+      </LinearGradient>
     );
   }
 
-  // ── SUMMARY ─────────────────────────────────────────────────────────────────
+  // ── SUMMARY ──────────────────────────────────────────────────────────────────
   if (phase === "summary") {
-    const pct = totalWords > 0 ? score / totalWords : 0;
-    const isGood = pct >= 0.8;
+    const isGood = totalWords > 0 && score / totalWords >= 0.8;
     return (
-      <View
-        style={[
-          styles.container,
-          {
-            backgroundColor: colors.background,
-            paddingTop: insets.top + 16,
-            paddingBottom: insets.bottom + 24,
-          },
-        ]}
-      >
+      <LinearGradient colors={[colors.gradientTop, colors.gradientBottom]} style={styles.gradient}>
         <ScrollView
-          contentContainerStyle={styles.summaryScroll}
+          contentContainerStyle={[
+            styles.summaryScroll,
+            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 },
+          ]}
           showsVerticalScrollIndicator={false}
         >
-          <View
-            style={[
-              styles.summaryIconWrap,
-              {
-                backgroundColor: isGood
-                  ? colors.success + "20"
-                  : colors.primary + "20",
-              },
-            ]}
-          >
+          <View style={[styles.summaryIconWrap, { backgroundColor: isGood ? colors.sunshine + "30" : colors.primary + "20" }]}>
             <MaterialIcons
               name={isGood ? "emoji-events" : "school"}
-              size={64}
-              color={isGood ? colors.success : colors.primary}
+              size={70}
+              color={isGood ? colors.sunshine : colors.primary}
             />
           </View>
 
           <Text style={[styles.summaryTitle, { color: colors.foreground }]}>
             퀴즈 완료!
           </Text>
-
           <Text style={[styles.summaryScore, { color: colors.primary }]}>
             {totalWords}개 중 {score}개 정답
           </Text>
 
           {maxStreak > 1 && (
-            <View style={styles.streakRow}>
-              <MaterialIcons
-                name="local-fire-department"
-                size={20}
-                color={colors.success}
-              />
-              <Text style={[styles.summaryStreak, { color: colors.mutedForeground }]}>
+            <View style={[styles.streakRow, { backgroundColor: colors.sunshine + "28", borderRadius: 999 }]}>
+              <MaterialIcons name="local-fire-department" size={20} color={colors.sunshine} />
+              <Text style={[styles.streakLabel, { color: colors.warningForeground }]}>
                 최고 연속 정답 {maxStreak}개
               </Text>
             </View>
           )}
 
           {missedWords.length > 0 && (
-            <View
-              style={[
-                styles.missedBox,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                  borderRadius: colors.radius,
-                },
-              ]}
-            >
+            <View style={[styles.missedBox, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
               <Text style={[styles.missedLabel, { color: colors.mutedForeground }]}>
                 틀린 단어
               </Text>
               {missedWords.map((w) => (
-                <Text
-                  key={w.id}
-                  style={[styles.missedWord, { color: colors.foreground }]}
-                >
-                  • {w.word}
-                  {"  "}
-                  <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>
+                <View key={w.id} style={styles.missedRow}>
+                  <MaterialIcons name="eco" size={14} color={colors.softGreen} />
+                  <Text style={[styles.missedWord, { color: colors.foreground }]}>
+                    {w.word}
+                  </Text>
+                  <Text style={[styles.missedKo, { color: colors.mutedForeground }]}>
                     {w.word_ko}
                   </Text>
-                </Text>
+                </View>
               ))}
             </View>
           )}
@@ -326,623 +316,446 @@ export default function TestScreen() {
           {missedWords.length > 0 && (
             <TouchableOpacity
               onPress={() => startSession(missedWords)}
-              style={[
-                styles.bigBtn,
-                { backgroundColor: colors.primary, borderRadius: colors.radius },
-              ]}
+              style={[styles.pill, { backgroundColor: colors.primary }]}
             >
               <MaterialIcons name="refresh" size={22} color="#fff" />
-              <Text style={styles.bigBtnText}>틀린 단어 다시</Text>
+              <Text style={styles.pillText}>틀린 단어 다시</Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
             onPress={() => { Speech.stop(); router.back(); }}
-            style={[
-              styles.bigBtn,
-              {
-                backgroundColor: colors.secondary,
-                borderRadius: colors.radius,
-              },
-            ]}
+            style={[styles.pillOutline, { borderColor: colors.primary }]}
           >
             <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
-            <Text style={[styles.bigBtnText, { color: colors.primary }]}>
-              단어 목록으로
-            </Text>
+            <Text style={[styles.pillOutlineText, { color: colors.primary }]}>단어 목록으로</Text>
           </TouchableOpacity>
         </ScrollView>
-      </View>
+      </LinearGradient>
     );
   }
 
-  // ── QUESTION / RETRY / CORRECT / WRONG ──────────────────────────────────────
+  // ── QUESTION / RETRY / CORRECT / WRONG ───────────────────────────────────────
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      {/* ── Header ── */}
-      <View
-        style={[
-          styles.header,
-          { paddingTop: topPad + 8, borderBottomColor: colors.border },
-        ]}
+    <LinearGradient colors={[colors.gradientTop, colors.gradientBottom]} style={styles.gradient}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <TouchableOpacity
-          onPress={() => {
-            Speech.stop();
-            router.back();
-          }}
-          style={[styles.iconBtn, { backgroundColor: colors.secondary }]}
-        >
-          <MaterialIcons name="close" size={22} color={colors.primary} />
-        </TouchableOpacity>
-
-        <View style={styles.progressWrap}>
-          <View style={styles.progressTopRow}>
-            <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>
-              진행
-            </Text>
-            <Text style={[styles.progressNum, { color: colors.foreground }]}>
-              {currentIndex + 1} / {totalWords}
-            </Text>
-          </View>
-          <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  backgroundColor: colors.primary,
-                  width: `${((currentIndex + 1) / totalWords) * 100}%` as any,
-                },
-              ]}
-            />
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.streakBadge,
-            {
-              backgroundColor:
-                streak > 0 ? colors.success + "20" : colors.muted,
-            },
-          ]}
-        >
-          <MaterialIcons
-            name="local-fire-department"
-            size={18}
-            color={streak > 0 ? colors.success : colors.mutedForeground}
-          />
-          <Text
-            style={[
-              styles.streakNum,
-              { color: streak > 0 ? colors.success : colors.mutedForeground },
-            ]}
-          >
-            {streak}
-          </Text>
-        </View>
-      </View>
-
-      {/* ── Body ── */}
-      <ScrollView
-        contentContainerStyle={[styles.body, { paddingBottom: botPad + 24 }]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Score chip */}
-        <View style={styles.scoreRow}>
-          <View
-            style={[
-              styles.scoreChip,
-              { backgroundColor: colors.primary + "15" },
-            ]}
-          >
-            <MaterialIcons name="star" size={16} color={colors.primary} />
-            <Text style={[styles.scoreText, { color: colors.primary }]}>
-              점수 {score}
-            </Text>
-          </View>
-        </View>
-
-        {/* Definition card */}
-        <View
-          style={[
-            styles.defCard,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderRadius: colors.radius,
-            },
-          ]}
-        >
-          <Text style={[styles.defPrompt, { color: colors.mutedForeground }]}>
-            뜻을 보고 영어 단어를 입력하세요
-          </Text>
-          <Text style={[styles.defText, { color: colors.foreground }]}>
-            {currentWord?.definition_en}
-          </Text>
-          <View style={styles.defFooter}>
-            <Text style={[styles.posChip, { color: colors.mutedForeground }]}>
-              {currentWord?.pos}
-            </Text>
-            <TouchableOpacity
-              onPress={replay}
-              style={[styles.replayBtn, { backgroundColor: colors.secondary }]}
-              activeOpacity={0.75}
-            >
-              <MaterialIcons name="volume-up" size={20} color={colors.primary} />
-              <Text style={[styles.replayText, { color: colors.primary }]}>
-                다시 듣기
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Hint box */}
-        {hintLevel > 0 && currentWord && (
-          <View
-            style={[
-              styles.hintBox,
-              {
-                backgroundColor: colors.warning + "18",
-                borderColor: colors.warning,
-                borderRadius: colors.radius,
-              },
-            ]}
-          >
-            <View style={styles.hintHeader}>
-              <MaterialIcons name="lightbulb" size={18} color={colors.warning} />
-              <Text style={[styles.hintLabel, { color: colors.warning }]}>
-                힌트
-                {hintLevel === 1
-                  ? ` — ${currentWord.word.length}글자`
-                  : " — 첫 글자 공개"}
-              </Text>
-            </View>
-            <Text
-              style={[styles.hintChars, { color: colors.foreground }]}
-              numberOfLines={2}
-            >
-              {buildHint(currentWord.word, hintLevel as 1 | 2)}
-            </Text>
-          </View>
-        )}
-
-        {/* Retry banner */}
-        {phase === "retry" && (
-          <View
-            style={[
-              styles.feedbackBanner,
-              {
-                backgroundColor: colors.warning + "22",
-                borderColor: colors.warning,
-                borderRadius: colors.radius,
-              },
-            ]}
-          >
-            <MaterialIcons name="mood" size={28} color={colors.warning} />
-            <Text
-              style={[
-                styles.feedbackMsg,
-                { color: colors.warningForeground ?? colors.warning },
-              ]}
-            >
-              아깝다! 한 글자 차이예요.{"\n"}한 번 더!
-            </Text>
-          </View>
-        )}
-
-        {/* Correct banner */}
-        {phase === "correct" && (
-          <View
-            style={[
-              styles.feedbackBanner,
-              {
-                backgroundColor: colors.success + "22",
-                borderColor: colors.success,
-                borderRadius: colors.radius,
-              },
-            ]}
-          >
-            <MaterialIcons name="check-circle" size={32} color={colors.success} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.feedbackMsg, { color: colors.success }]}>
-                {praiseMsg}
-              </Text>
-              <Text style={[styles.feedbackAnswer, { color: colors.foreground }]}>
-                {currentWord?.word}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Wrong banner */}
-        {phase === "wrong" && (
-          <View
-            style={[
-              styles.feedbackBanner,
-              {
-                backgroundColor: colors.destructive + "18",
-                borderColor: colors.destructive,
-                borderRadius: colors.radius,
-              },
-            ]}
-          >
-            <MaterialIcons name="cancel" size={32} color={colors.destructive} />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[styles.feedbackMsg, { color: colors.destructive }]}
-              >
-                정답은:
-              </Text>
-              <Text style={[styles.feedbackAnswer, { color: colors.foreground }]}>
-                {currentWord?.word}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Input + action row */}
-        {(phase === "question" || phase === "retry") && (
-          <>
-            <TextInput
-              ref={inputRef}
-              value={userInput}
-              onChangeText={setUserInput}
-              placeholder="영어 단어를 입력하세요"
-              placeholderTextColor={colors.mutedForeground + "80"}
-              style={[
-                styles.input,
-                {
-                  color: colors.foreground,
-                  borderColor:
-                    phase === "retry" ? colors.warning : colors.border,
-                  backgroundColor: colors.card,
-                  borderRadius: colors.radius,
-                },
-              ]}
-              autoCapitalize="none"
-              autoCorrect={false}
-              spellCheck={false}
-              returnKeyType="done"
-              onSubmitEditing={submit}
-            />
-
-            <View style={styles.actionRow}>
-              <TouchableOpacity
-                onPress={showHint}
-                disabled={hintLevel >= 2}
-                style={[
-                  styles.hintBtn,
-                  {
-                    backgroundColor: colors.secondary,
-                    borderRadius: colors.radius,
-                    opacity: hintLevel >= 2 ? 0.4 : 1,
-                  },
-                ]}
-                activeOpacity={0.8}
-              >
-                <MaterialIcons
-                  name="lightbulb"
-                  size={20}
-                  color={colors.primary}
-                />
-                <Text style={[styles.hintBtnText, { color: colors.primary }]}>
-                  힌트{hintLevel > 0 ? ` (${hintLevel}/2)` : ""}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={submit}
-                disabled={!userInput.trim()}
-                style={[
-                  styles.submitBtn,
-                  {
-                    backgroundColor: userInput.trim()
-                      ? colors.primary
-                      : colors.muted,
-                    borderRadius: colors.radius,
-                  },
-                ]}
-                activeOpacity={0.85}
-              >
-                <Text
-                  style={[
-                    styles.submitBtnText,
-                    {
-                      color: userInput.trim()
-                        ? "#fff"
-                        : colors.mutedForeground,
-                    },
-                  ]}
-                >
-                  제출
-                </Text>
-                <MaterialIcons
-                  name="send"
-                  size={20}
-                  color={userInput.trim() ? "#fff" : colors.mutedForeground}
-                />
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-
-        {/* Next / Finish button */}
-        {(phase === "correct" || phase === "wrong") && (
+        {/* ── Header ── */}
+        <View style={[styles.header, { paddingTop: topPad + 8 }]}>
           <TouchableOpacity
-            onPress={advance}
-            style={[
-              styles.nextBtn,
-              {
-                backgroundColor:
-                  phase === "correct" ? colors.success : colors.primary,
-                borderRadius: colors.radius,
-              },
-            ]}
-            activeOpacity={0.85}
+            onPress={() => { Speech.stop(); router.back(); }}
+            style={[styles.iconBtn, { backgroundColor: colors.card }]}
           >
-            <Text style={styles.nextBtnText}>
-              {currentIndex + 1 >= totalWords ? "결과 보기" : "다음 단어"}
-            </Text>
-            <MaterialIcons
-              name={currentIndex + 1 >= totalWords ? "flag" : "arrow-forward"}
-              size={24}
-              color="#fff"
-            />
+            <MaterialIcons name="close" size={22} color={colors.primary} />
           </TouchableOpacity>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <View style={styles.progressWrap}>
+            <View style={styles.progressTopRow}>
+              <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>진행</Text>
+              <Text style={[styles.progressNum, { color: colors.foreground }]}>
+                {currentIndex + 1} / {totalWords}
+              </Text>
+            </View>
+            <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    backgroundColor: colors.primary,
+                    width: `${((currentIndex + 1) / totalWords) * 100}%` as any,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+
+          <View style={[styles.streakBadge, { backgroundColor: streak > 0 ? colors.sunshine + "28" : colors.card }]}>
+            <MaterialIcons
+              name="local-fire-department"
+              size={20}
+              color={streak > 0 ? colors.sunshine : colors.border}
+            />
+            <Text style={[styles.streakNum, { color: streak > 0 ? colors.warningForeground : colors.mutedForeground }]}>
+              {streak}
+            </Text>
+          </View>
+        </View>
+
+        {/* ── Body ── */}
+        <ScrollView
+          contentContainerStyle={[styles.body, { paddingBottom: botPad + 24 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Score chip */}
+          <View style={styles.scoreRow}>
+            <View style={[styles.scoreChip, { backgroundColor: colors.primary + "18" }]}>
+              <MaterialIcons name="star" size={16} color={colors.sunshine} />
+              <Text style={[styles.scoreText, { color: colors.primary }]}>점수 {score}</Text>
+            </View>
+          </View>
+
+          {/* Definition card */}
+          <View style={[styles.defCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
+            <Text style={[styles.defPrompt, { color: colors.mutedForeground }]}>
+              뜻을 보고 영어 단어를 입력하세요
+            </Text>
+            <Text style={[styles.defText, { color: colors.foreground }]}>
+              {currentWord?.definition_en}
+            </Text>
+            <View style={styles.defFooter}>
+              <View style={[styles.posBadge, { backgroundColor: colors.primary + "18" }]}>
+                <Text style={[styles.posText, { color: colors.primary }]}>{currentWord?.pos}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={replay}
+                style={[styles.replayPill, { backgroundColor: colors.secondary }]}
+                activeOpacity={0.75}
+              >
+                <MaterialIcons name="volume-up" size={20} color={colors.primary} />
+                <Text style={[styles.replayText, { color: colors.primary }]}>다시 듣기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Hint box */}
+          {hintLevel > 0 && currentWord && (
+            <View style={[styles.hintBox, { backgroundColor: colors.sunshine + "20", borderColor: colors.sunshine, borderRadius: 16 }]}>
+              <View style={styles.hintHeader}>
+                <MaterialIcons name="lightbulb" size={18} color={colors.sunshine} />
+                <Text style={[styles.hintLabel, { color: colors.warningForeground }]}>
+                  힌트{hintLevel === 1 ? ` — ${currentWord.word.length}글자` : " — 첫 글자 공개"}
+                </Text>
+              </View>
+              <Text style={[styles.hintChars, { color: colors.foreground }]} numberOfLines={2}>
+                {buildHint(currentWord.word, hintLevel as 1 | 2)}
+              </Text>
+            </View>
+          )}
+
+          {/* Retry banner */}
+          {phase === "retry" && (
+            <View style={[styles.banner, { backgroundColor: colors.sunshine + "28", borderColor: colors.sunshine, borderRadius: 20 }]}>
+              <MaterialIcons name="mood" size={30} color={colors.sunshine} />
+              <Text style={[styles.bannerText, { color: colors.warningForeground }]}>
+                아깝다! 한 글자 차이예요.{"\n"}한 번 더!
+              </Text>
+            </View>
+          )}
+
+          {/* Correct banner + star sparkle */}
+          {phase === "correct" && (
+            <View style={[styles.banner, { backgroundColor: colors.success + "20", borderColor: colors.success, borderRadius: 20 }]}>
+              <Animated.View style={{ transform: [{ scale: starScale }], opacity: starOpacity }}>
+                <MaterialIcons name="star" size={36} color={colors.sunshine} />
+              </Animated.View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.bannerText, { color: colors.success }]}>{praiseMsg}</Text>
+                <Text style={[styles.bannerAnswer, { color: colors.foreground }]}>
+                  {currentWord?.word}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Wrong banner — soft shake, no harsh red */}
+          {phase === "wrong" && (
+            <Animated.View style={{ transform: [{ translateX: shakeX }] }}>
+              <View style={[styles.banner, { backgroundColor: colors.destructive + "15", borderColor: colors.destructive + "60", borderRadius: 20 }]}>
+                <MaterialIcons name="sentiment-dissatisfied" size={30} color={colors.destructive} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.bannerText, { color: colors.destructive }]}>정답은:</Text>
+                  <Text style={[styles.bannerAnswer, { color: colors.foreground }]}>
+                    {currentWord?.word}
+                  </Text>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+
+          {/* Input + actions */}
+          {(phase === "question" || phase === "retry") && (
+            <>
+              <TextInput
+                ref={inputRef}
+                value={userInput}
+                onChangeText={setUserInput}
+                placeholder="영어 단어를 입력하세요"
+                placeholderTextColor={colors.mutedForeground + "70"}
+                style={[
+                  styles.input,
+                  {
+                    color: colors.foreground,
+                    borderColor: phase === "retry" ? colors.sunshine : colors.border,
+                    backgroundColor: colors.card,
+                    borderRadius: 20,
+                  },
+                ]}
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                returnKeyType="done"
+                onSubmitEditing={submit}
+              />
+
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  onPress={showHint}
+                  disabled={hintLevel >= 2}
+                  style={[
+                    styles.hintPill,
+                    { backgroundColor: colors.card, borderColor: colors.sunshine, opacity: hintLevel >= 2 ? 0.4 : 1 },
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="lightbulb" size={20} color={colors.sunshine} />
+                  <Text style={[styles.hintPillText, { color: colors.warningForeground }]}>
+                    힌트{hintLevel > 0 ? ` (${hintLevel}/2)` : ""}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={submit}
+                  disabled={!userInput.trim()}
+                  style={[
+                    styles.submitPill,
+                    { backgroundColor: userInput.trim() ? colors.primary : colors.border },
+                  ]}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[styles.submitPillText, { color: userInput.trim() ? "#fff" : colors.mutedForeground }]}>
+                    제출
+                  </Text>
+                  <MaterialIcons name="send" size={20} color={userInput.trim() ? "#fff" : colors.mutedForeground} />
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {/* Next / Finish */}
+          {(phase === "correct" || phase === "wrong") && (
+            <TouchableOpacity
+              onPress={advance}
+              style={[
+                styles.pill,
+                {
+                  backgroundColor: phase === "correct" ? colors.success : colors.primary,
+                },
+              ]}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.pillText}>
+                {currentIndex + 1 >= totalWords ? "결과 보기" : "다음 단어"}
+              </Text>
+              <MaterialIcons
+                name={currentIndex + 1 >= totalWords ? "flag" : "arrow-forward"}
+                size={24}
+                color="#fff"
+              />
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 // ─── styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    paddingHorizontal: 32,
-  },
-  emptyTitle: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center" },
-  emptySub: {
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-  },
+  gradient: { flex: 1 },
+  flex: { flex: 1 },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 32 },
+  emptyTitle: { fontSize: 24, fontFamily: "Baloo2_700Bold", textAlign: "center" },
+  emptySub: { fontSize: 16, fontFamily: "Jua_400Regular", textAlign: "center" },
 
-  // ── Header ──
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    gap: 12,
+    gap: 10,
   },
   iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   progressWrap: { flex: 1, gap: 6 },
-  progressTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  progressLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  progressNum: { fontSize: 13, fontFamily: "Inter_700Bold" },
-  progressTrack: {
-    height: 6,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: { height: 6, borderRadius: 3 },
+  progressTopRow: { flexDirection: "row", justifyContent: "space-between" },
+  progressLabel: { fontSize: 12, fontFamily: "Jua_400Regular" },
+  progressNum: { fontSize: 14, fontFamily: "Baloo2_700Bold" },
+  progressTrack: { height: 8, borderRadius: 4, overflow: "hidden" },
+  progressFill: { height: 8, borderRadius: 4 },
   streakBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    minWidth: 52,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    minWidth: 54,
     justifyContent: "center",
   },
-  streakNum: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  streakNum: { fontSize: 18, fontFamily: "Baloo2_700Bold" },
 
-  // ── Body ──
-  body: { paddingHorizontal: 16, paddingTop: 16, gap: 14 },
+  body: { paddingHorizontal: 16, paddingTop: 8, gap: 14 },
   scoreRow: { flexDirection: "row" },
   scoreChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
   },
-  scoreText: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  scoreText: { fontSize: 15, fontFamily: "Baloo2_700Bold" },
 
-  // ── Definition card ──
   defCard: {
-    borderWidth: 1.5,
-    padding: 20,
-    gap: 10,
+    padding: 22,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  defPrompt: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  defText: {
-    fontSize: 22,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 32,
-  },
-  defFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  posChip: { fontSize: 14, fontFamily: "Inter_500Medium" },
-  replayBtn: {
+  defPrompt: { fontSize: 12, fontFamily: "Jua_400Regular", letterSpacing: 0.3 },
+  defText: { fontSize: 22, fontFamily: "Baloo2_400Regular", lineHeight: 34 },
+  defFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  posBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
+  posText: { fontSize: 13, fontFamily: "Baloo2_600SemiBold" },
+  replayPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 999,
   },
-  replayText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  replayText: { fontSize: 15, fontFamily: "Baloo2_600SemiBold" },
 
-  // ── Hint box ──
-  hintBox: { borderWidth: 1.5, padding: 14, gap: 8 },
+  hintBox: { borderWidth: 1.5, padding: 16, gap: 8 },
   hintHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
-  hintLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  hintChars: {
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 4,
-    lineHeight: 36,
-  },
+  hintLabel: { fontSize: 14, fontFamily: "Baloo2_600SemiBold" },
+  hintChars: { fontSize: 24, fontFamily: "Baloo2_700Bold", letterSpacing: 5, lineHeight: 38 },
 
-  // ── Feedback banners ──
-  feedbackBanner: {
+  banner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    padding: 16,
+    padding: 18,
     borderWidth: 1.5,
   },
-  feedbackMsg: { fontSize: 18, fontFamily: "Inter_700Bold", lineHeight: 26 },
-  feedbackAnswer: {
-    fontSize: 26,
-    fontFamily: "Inter_700Bold",
-    marginTop: 4,
-  },
+  bannerText: { fontSize: 18, fontFamily: "Baloo2_700Bold", lineHeight: 26 },
+  bannerAnswer: { fontSize: 26, fontFamily: "Baloo2_800ExtraBold", marginTop: 4 },
 
-  // ── Input ──
   input: {
-    borderWidth: 2,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 22,
-    fontFamily: "Inter_400Regular",
+    borderWidth: 2.5,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    fontSize: 24,
+    fontFamily: "Baloo2_400Regular",
   },
 
-  // ── Action row ──
-  actionRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  hintBtn: {
+  actionRow: { flexDirection: "row", gap: 10 },
+  hintPill: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
+    borderRadius: 999,
     paddingVertical: 16,
+    borderWidth: 1.5,
+    minHeight: 56,
   },
-  hintBtnText: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  submitBtn: {
+  hintPillText: { fontSize: 16, fontFamily: "Baloo2_600SemiBold" },
+  submitPill: {
     flex: 2,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    borderRadius: 999,
     paddingVertical: 16,
+    minHeight: 56,
   },
-  submitBtnText: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  submitPillText: { fontSize: 18, fontFamily: "Baloo2_700Bold" },
 
-  // ── Next button ──
-  nextBtn: {
+  pill: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
+    borderRadius: 999,
     paddingVertical: 18,
+    paddingHorizontal: 28,
+    minHeight: 60,
+    shadowColor: "#4FC3A1",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 6,
   },
-  nextBtnText: {
-    color: "#fff",
-    fontSize: 20,
-    fontFamily: "Inter_700Bold",
-  },
-
-  // ── Buttons ──
-  bigBtn: {
+  pillText: { color: "#fff", fontSize: 20, fontFamily: "Baloo2_700Bold" },
+  pillOutline: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    borderRadius: 999,
+    paddingVertical: 16,
+    paddingHorizontal: 28,
+    minHeight: 56,
+    borderWidth: 2,
+    backgroundColor: "transparent",
   },
-  bigBtnText: { color: "#fff", fontSize: 18, fontFamily: "Inter_700Bold" },
+  pillOutlineText: { fontSize: 18, fontFamily: "Baloo2_700Bold" },
 
-  // ── Summary ──
-  summaryScroll: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-    gap: 18,
-    alignItems: "center",
-  },
+  summaryScroll: { paddingHorizontal: 24, gap: 18, alignItems: "center" },
   summaryIconWrap: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
-  summaryTitle: {
-    fontSize: 30,
-    fontFamily: "Inter_700Bold",
-    textAlign: "center",
-  },
-  summaryScore: {
-    fontSize: 26,
-    fontFamily: "Inter_700Bold",
-    textAlign: "center",
-  },
+  summaryTitle: { fontSize: 32, fontFamily: "Baloo2_800ExtraBold", textAlign: "center" },
+  summaryScore: { fontSize: 26, fontFamily: "Baloo2_700Bold", textAlign: "center" },
   streakRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
   },
-  summaryStreak: {
-    fontSize: 16,
-    fontFamily: "Inter_500Medium",
-  },
+  streakLabel: { fontSize: 16, fontFamily: "Jua_400Regular" },
   missedBox: {
-    borderWidth: 1.5,
-    padding: 18,
-    gap: 10,
     width: "100%",
+    padding: 20,
+    gap: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  missedLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
-  missedWord: {
-    fontSize: 18,
-    fontFamily: "Inter_600SemiBold",
-    lineHeight: 28,
-  },
+  missedLabel: { fontSize: 12, fontFamily: "Jua_400Regular", letterSpacing: 0.5, marginBottom: 2 },
+  missedRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  missedWord: { fontSize: 18, fontFamily: "Baloo2_700Bold" },
+  missedKo: { fontSize: 15, fontFamily: "Jua_400Regular" },
 });
