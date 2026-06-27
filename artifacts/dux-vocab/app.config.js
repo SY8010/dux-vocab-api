@@ -9,7 +9,7 @@ const config = {
   icon: "./assets/images/icon.png",
   scheme: "dux-vocab",
   userInterfaceStyle: "automatic",
-  newArchEnabled: false,
+  newArchEnabled: true,
   splash: {
     image: "./assets/images/icon.png",
     resizeMode: "contain",
