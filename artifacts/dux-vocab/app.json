@@ -22,7 +22,11 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#F5F7FF"
       },
-      "package": "com.dux.vocabularytest"
+      "package": "com.dux.vocabularytest",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -46,6 +50,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "37edd3aa-ec59-4246-80a2-a0f59f4149d4"
+      }
     }
   }
 }
